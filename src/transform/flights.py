@@ -78,6 +78,19 @@ def _normalize_tz_offset(value: Any) -> Optional[int]:
     return num
 
 
+def _to_optional_str(value: Any) -> Optional[str]:
+    """Return a trimmed string if non-empty; otherwise None."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        s = value.strip()
+        return s or None
+    try:
+        return str(value)
+    except Exception:  # pragma: no cover - defensive
+        return None
+
+
 @dataclass(frozen=True)
 class FlightRecord:
     """Structured representation of a scheduled or actual flight."""
@@ -184,8 +197,13 @@ def extract_departure_records(
 
     records: List[FlightRecord] = []
     for item in departures:
+        # Prefer published flight number; if absent (e.g., cancelled/private), use a placeholder
+        flight_num = _to_optional_str(
+            _nested_get(item, ["flight", "identification", "number", "default"])
+        ) or "-"
+
         record = FlightRecord(
-            flight_num=_nested_get(item, ["flight", "identification", "number", "default"]),
+            flight_num=flight_num,
             status_detail=_nested_get(item, ["flight", "status", "text"]),
             aircraft_code=_nested_get(item, ["flight", "aircraft", "model", "code"]),
             aircraft_text=_nested_get(item, ["flight", "aircraft", "model", "text"]),

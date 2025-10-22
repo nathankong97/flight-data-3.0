@@ -1,6 +1,6 @@
 """Database persistence helpers for flight records."""
 
-from typing import Iterable
+from typing import Iterable, List
 
 from src.db import DatabaseClient
 from src.transform import FlightRecord
@@ -126,10 +126,12 @@ def upsert_flights(
 ) -> int:
     """Persist flight records, updating existing rows on conflict."""
 
-    params_list = [record.to_db_params(ingest_run_id) for record in records]
-    if not params_list:
+    # Filter out records without a usable flight identifier to satisfy NOT NULL constraint.
+    valid_records: List[FlightRecord] = [r for r in records if r.flight_num]
+    if not valid_records:
         return 0
 
+    params_list = [record.to_db_params(ingest_run_id) for record in valid_records]
     db_client.executemany(UPSERT_SQL, params_list)
     return len(params_list)
 
