@@ -51,8 +51,8 @@ class FlightRadarClient:
 
         if not airport_code:
             raise ValueError("airport_code must be provided")
-        if page < 1:
-            raise ValueError("page must be >= 1")
+        if page == 0:
+            raise ValueError("page must be != 0")
         if limit <= 0:
             raise ValueError("limit must be positive")
 
