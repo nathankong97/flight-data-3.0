@@ -61,6 +61,23 @@ def _to_optional_bool(value: Any) -> Optional[bool]:
     return None
 
 
+def _normalize_tz_offset(value: Any) -> Optional[int]:
+    """Return timezone offset in hours.
+
+    The upstream payload may report offsets as hours (e.g., 9, -7) or as seconds
+    (e.g., 32400, -25200). Convert seconds to whole hours to align with the
+    SMALLINT schema and test expectations.
+    """
+    num = _to_optional_int(value)
+    if num is None:
+        return None
+    if abs(num) > 24:
+        # Treat as seconds; convert to hours using integer division.
+        # This preserves sign and yields whole-hour offsets used in this project.
+        return int(num / 3600)
+    return num
+
+
 @dataclass(frozen=True)
 class FlightRecord:
     """Structured representation of a scheduled or actual flight."""
@@ -186,7 +203,7 @@ def extract_departure_records(
             airline_iata=_nested_get(item, ["flight", "airline", "code", "iata"]),
             airline_icao=_nested_get(item, ["flight", "airline", "code", "icao"]),
             origin_iata=origin_upper,
-            origin_offset=_to_optional_int(
+            origin_offset=_normalize_tz_offset(
                 _nested_get(item, ["flight", "airport", "origin", "timezone", "offset"])
             ),
             origin_offset_abbr=_nested_get(
@@ -201,7 +218,7 @@ def extract_departure_records(
             origin_gate=_nested_get(item, ["flight", "airport", "origin", "info", "gate"]),
             dest_iata=_nested_get(item, ["flight", "airport", "destination", "code", "iata"]),
             dest_icao=_nested_get(item, ["flight", "airport", "destination", "code", "icao"]),
-            dest_offset=_to_optional_int(
+            dest_offset=_normalize_tz_offset(
                 _nested_get(item, ["flight", "airport", "destination", "timezone", "offset"])
             ),
             dest_offset_abbr=_nested_get(
