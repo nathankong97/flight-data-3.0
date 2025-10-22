@@ -25,6 +25,8 @@ class RunConfig:
     limit_per_page: int = 100
     retry_attempts: int = 3
     retry_delay_seconds: float = 2.0
+    page_delay_seconds: float = 0.0
+    airport_delay_seconds: float = 0.0
 
 
 def _page_sequence(start_page: int, max_pages: Optional[int]) -> List[int]:
@@ -86,13 +88,39 @@ def run_job(
             )
             if not records:
                 LOGGER.info("No records returned for %s page %s", airport, page)
+                # Even when empty, honor page delay throttling
+                if job_config.page_delay_seconds > 0 and page != pages[-1]:
+                    LOGGER.debug(
+                        "Sleeping %.1fs between pages for %s",
+                        job_config.page_delay_seconds,
+                        airport,
+                    )
+                    time.sleep(job_config.page_delay_seconds)
                 continue
 
             upsert_count = upsert_flights(db_client, ingest_run_id, records)
             LOGGER.info(
                 "Upserted %s records for %s page %s", upsert_count, airport, page
             )
+            # Throttle between page fetches
+            if job_config.page_delay_seconds > 0 and page != pages[-1]:
+                LOGGER.debug(
+                    "Sleeping %.1fs between pages for %s",
+                    job_config.page_delay_seconds,
+                    airport,
+                )
+                time.sleep(job_config.page_delay_seconds)
 
+        # Throttle between airports
+        if (
+            job_config.airport_delay_seconds > 0
+            and index < len(airports) - 1
+        ):
+            LOGGER.debug(
+                "Sleeping %.1fs before next airport",
+                job_config.airport_delay_seconds,
+            )
+            time.sleep(job_config.airport_delay_seconds)
     LOGGER.info("%s run %s completed", job_name, ingest_run_id)
     return ingest_run_id
 

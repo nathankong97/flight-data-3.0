@@ -42,6 +42,18 @@ def parse_args() -> argparse.Namespace:
         default=2.0,
         help="Seconds to wait between API retries (default: 2.0).",
     )
+    parser.add_argument(
+        "--page-delay",
+        type=float,
+        default=10.0,
+        help="Seconds to wait between page fetches (default: 10.0).",
+    )
+    parser.add_argument(
+        "--airport-delay",
+        type=float,
+        default=60.0,
+        help="Seconds to wait between airports (default: 60.0).",
+    )
     return parser.parse_args()
 
 
@@ -57,6 +69,8 @@ def main() -> int:
         limit_per_page=args.limit,
         retry_attempts=args.retry_attempts,
         retry_delay_seconds=args.retry_delay,
+        page_delay_seconds=args.page_delay,
+        airport_delay_seconds=args.airport_delay,
     )
 
     db_client = DatabaseClient(config.database_url)
