@@ -2,9 +2,10 @@
 """Command-line entrypoint for running the flight data job."""
 
 import argparse
+import logging
 
 from src.api import FlightRadarClient
-from src.config import load_config
+from src.config import load_config, AppConfig, REPO_ROOT
 from src.db import DatabaseClient
 from src.jobs import RunConfig, run_job
 from src.logging_utils import configure_logging
@@ -59,8 +60,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    try:
+        config = load_config()
+    except Exception as exc:  # noqa: BLE001 - log and exit gracefully with a file
+        # Fall back to a default log location so failures are still captured per run.
+        fallback = AppConfig(
+            database_url="postgresql://invalid",  # unused for logging setup
+            log_directory=REPO_ROOT / "logs",
+            log_level="INFO",
+        )
+        log_path = configure_logging(fallback)
+        logging.getLogger(__name__).error("Failed to load configuration: %s", exc)
+        # Ensure the error is flushed to the log file before exiting.
+        for handler in logging.getLogger().handlers:
+            try:
+                handler.flush()
+            except Exception:  # pragma: no cover - defensive
+                pass
+        return 1
 
-    config = load_config()
     configure_logging(config)
 
     run_config = RunConfig(
