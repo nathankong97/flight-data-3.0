@@ -95,8 +95,6 @@ def _to_optional_str(value: Any) -> Optional[str]:
 class FlightRecord:
     """Structured representation of a scheduled or actual flight."""
 
-    # Unique identifier from upstream data source (FlightRadar24)
-    flight_id: Optional[int] = field(default=None, kw_only=True)
     flight_num: Optional[str]
     status_detail: Optional[str]
     aircraft_code: Optional[str]
@@ -132,6 +130,8 @@ class FlightRecord:
     dest_lat: Optional[float]
     dest_lng: Optional[float]
     ingest_run_id: Optional[str] = None
+    # Unique identifier from upstream data source (FlightRadar24)
+    flight_id: Optional[int] = None
 
     def with_ingest_run(self, ingest_run_id: str) -> "FlightRecord":
         return replace(self, ingest_run_id=ingest_run_id)
