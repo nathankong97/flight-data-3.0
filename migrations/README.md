@@ -91,3 +91,7 @@
   ```sql
   GRANT SELECT, INSERT, UPDATE ON TABLE public.flights TO codex;
   ```
+- 006_alter_flights_add_flight_id.sql
+  - Adds `flight_id BIGINT` to `public.flights` and a unique index on non-null values to support `ON CONFLICT (flight_id)`.
+  - Backfill is data-source specific; after backfilling, you may optionally promote to a primary key and drop the surrogate `id` if desired.
+  - Apply with `psql -f migrations/006_alter_flights_add_flight_id.sql "$DATABASE_URL"`.
