@@ -25,8 +25,8 @@ class RunConfig:
     limit_per_page: int = 100
     retry_attempts: int = 3
     retry_delay_seconds: float = 2.0
-    page_delay_seconds: float = 0.0
-    airport_delay_seconds: float = 0.0
+    page_delay_seconds: float = 5.0
+    airport_delay_seconds: float = 30.0
 
 
 def _page_sequence(start_page: int, max_pages: Optional[int]) -> List[int]:

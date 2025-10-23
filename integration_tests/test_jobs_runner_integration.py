@@ -8,7 +8,7 @@ from src.jobs.runner import RunConfig, run_job
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS flights (
-    id BIGSERIAL PRIMARY KEY,
+    flight_id BIGINT PRIMARY KEY,
     ingest_run_id UUID NOT NULL,
     flight_num TEXT NOT NULL,
     status_detail TEXT,
@@ -47,8 +47,7 @@ CREATE TABLE IF NOT EXISTS flights (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_flights_conflict
-    ON flights (ingest_run_id, flight_num, sched_dep, dest_iata);
+-- Primary key ensures uniqueness on upstream flight id
 """
 
 
@@ -61,7 +60,12 @@ def test_run_job_full_flow(monkeypatch, app_config, db_client):
     monkeypatch.setattr("src.jobs.runner.page_for_index", lambda region, idx: -1)
 
     client = FlightRadarClient(timeout=15)
-    run_config = RunConfig(region="test", limit_per_page=10)
+    run_config = RunConfig(
+        region="test",
+        limit_per_page=10,
+        page_delay_seconds=0,
+        airport_delay_seconds=0,
+    )
 
     try:
         try:

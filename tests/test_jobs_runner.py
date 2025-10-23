@@ -32,7 +32,12 @@ def test_run_job_orders_calls(monkeypatch, app_config):
     upsert = MagicMock()
     monkeypatch.setattr("src.jobs.runner.upsert_flights", upsert)
 
-    run_config = RunConfig(region="jp", max_pages=1)
+    run_config = RunConfig(
+        region="jp",
+        max_pages=1,
+        page_delay_seconds=0,
+        airport_delay_seconds=0,
+    )
 
     run_job(app_config, MagicMock(), api_client, run_config)
 
