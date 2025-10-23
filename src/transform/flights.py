@@ -1,6 +1,6 @@
 """Transform FlightRadar API responses into structured flight records."""
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 
@@ -95,6 +95,8 @@ def _to_optional_str(value: Any) -> Optional[str]:
 class FlightRecord:
     """Structured representation of a scheduled or actual flight."""
 
+    # Unique identifier from upstream data source (FlightRadar24)
+    flight_id: Optional[int] = field(default=None, kw_only=True)
     flight_num: Optional[str]
     status_detail: Optional[str]
     aircraft_code: Optional[str]
@@ -139,6 +141,7 @@ class FlightRecord:
         if not run_id:
             raise ValueError("ingest_run_id must be provided")
         return {
+            "flight_id": self.flight_id,
             "ingest_run_id": run_id,
             "flight_num": self.flight_num,
             "status_detail": self.status_detail,
@@ -203,6 +206,9 @@ def extract_departure_records(
         ) or "-"
 
         record = FlightRecord(
+            flight_id=_to_optional_int(
+                _nested_get(item, ["flight", "identification", "row"])
+            ),
             flight_num=flight_num,
             status_detail=_nested_get(item, ["flight", "status", "text"]),
             aircraft_code=_nested_get(item, ["flight", "aircraft", "model", "code"]),

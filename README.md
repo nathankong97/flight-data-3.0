@@ -42,7 +42,7 @@ Logs are written per run to `logs/<app>-<run_id>.log` (see `src/logging_utils.py
 
 - `src/api/` — HTTP clients (FlightRadar24)
 - `src/transform/` — parse + normalize API payloads into `FlightRecord`
-- `src/persistence/` — upsert helpers for `flights` fact table
+- `src/persistence/` — upsert helpers for `flights` fact table (keyed by upstream `flight_id`)
 - `src/db/` — psycopg v3 pool wrapper
 - `src/jobs/` — orchestration (fetch → transform → persist)
 - `src/reference/` — coordinate lookup from DB

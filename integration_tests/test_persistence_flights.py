@@ -9,7 +9,7 @@ from src.transform import FlightRecord
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS flights (
-    id BIGSERIAL PRIMARY KEY,
+    flight_id BIGINT PRIMARY KEY,
     ingest_run_id UUID NOT NULL,
     flight_num TEXT NOT NULL,
     status_detail TEXT,
@@ -48,8 +48,7 @@ CREATE TABLE IF NOT EXISTS flights (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_flights_conflict
-    ON flights (ingest_run_id, flight_num, sched_dep, dest_iata);
+-- Primary key enforces uniqueness on upstream flight id
 """
 
 
@@ -59,6 +58,7 @@ def test_upsert_flights_updates_existing(db_client):
     ingest_run_id = str(uuid.uuid4())
 
     record = FlightRecord(
+        flight_id=5730365369,
         flight_num="NH123",
         status_detail="Scheduled",
         aircraft_code="789",

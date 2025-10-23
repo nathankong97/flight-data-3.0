@@ -8,6 +8,7 @@ from src.transform import FlightRecord
 
 UPSERT_SQL = """
     INSERT INTO flights (
+        flight_id,
         ingest_run_id,
         flight_num,
         status_detail,
@@ -45,6 +46,7 @@ UPSERT_SQL = """
         dest_lng
     )
     VALUES (
+        %(flight_id)s,
         %(ingest_run_id)s,
         %(flight_num)s,
         %(status_detail)s,
@@ -81,7 +83,7 @@ UPSERT_SQL = """
         %(dest_lat)s,
         %(dest_lng)s
     )
-    ON CONFLICT (ingest_run_id, flight_num, sched_dep, dest_iata)
+    ON CONFLICT (flight_id)
     DO UPDATE SET
         status_detail = EXCLUDED.status_detail,
         aircraft_code = EXCLUDED.aircraft_code,
@@ -126,8 +128,8 @@ def upsert_flights(
 ) -> int:
     """Persist flight records, updating existing rows on conflict."""
 
-    # Filter out records without a usable flight identifier to satisfy NOT NULL constraint.
-    valid_records: List[FlightRecord] = [r for r in records if r.flight_num]
+    # Filter out records without a source flight_id (used as primary key).
+    valid_records: List[FlightRecord] = [r for r in records if r.flight_id is not None]
     if not valid_records:
         return 0
 

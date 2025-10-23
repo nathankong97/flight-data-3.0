@@ -67,16 +67,15 @@
 - Grant `SELECT`, `INSERT`, and `UPDATE` on `public.countries` to the application role for refresh runs.
 
 ## 005_create_flights.sql
-- Creates the primary `public.flights` fact table, designed for large-scale ingestion; includes per-run uniqueness via `(ingest_run_id, flight_num, sched_dep, dest_iata)`.
+- Creates the primary `public.flights` fact table keyed by the upstream flight identifier (`flight_id` from `identification.row`). This replaces the prior surrogate `id` sequence.
 - Columns capture aircraft metadata, offsets, gates, coordinates, and schedule/actual times stored as Unix epoch seconds (`BIGINT`); `ingest_run_id` (UUID) links to batch metadata.
 - Apply with `psql -f migrations/005_create_flights.sql "$DATABASE_URL"` once the role has `USAGE`, `CREATE`, and table-level DML privileges.
 - Recommended privileges for the ingestion role:
   ```sql
   GRANT SELECT, INSERT, UPDATE ON TABLE public.flights TO ingest_app;
-  GRANT USAGE, SELECT ON SEQUENCE public.flights_id_seq TO ingest_app;
   ```
 - Ingestion should normalize incoming timestamps to epoch seconds; downstream analytics can convert with `TO_TIMESTAMP(sched_dep)` when needed.
-- Populate the table via your ingestion pipeline using parameterized `INSERT ... ON CONFLICT` statements keyed by the unique constraint, ensuring each run writes a distinct `ingest_run_id`.
+- Populate the table via parameterized `INSERT ... ON CONFLICT (flight_id) DO UPDATE` statements to upsert by source flight identity across runs.
 
 ## Postgres Role Setup Cheatsheet
 - Grant schema and database privileges needed for migrations and integration tests:
@@ -88,8 +87,7 @@
   ```sql
   ALTER ROLE codex SET search_path TO public;
   ```
-- Allow runtime DML on the fact table and sequence:
+- Allow runtime DML on the fact table:
   ```sql
   GRANT SELECT, INSERT, UPDATE ON TABLE public.flights TO codex;
-  GRANT USAGE, SELECT ON SEQUENCE public.flights_id_seq TO codex;
   ```

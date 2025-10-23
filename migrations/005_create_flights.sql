@@ -2,7 +2,7 @@
 -- All schedule/actual timestamps are stored as Unix epoch values (seconds since 1970-01-01 UTC).
 
 CREATE TABLE IF NOT EXISTS public.flights (
-    id                      BIGSERIAL PRIMARY KEY,
+    flight_id               BIGINT     PRIMARY KEY,
     ingest_run_id           UUID        NOT NULL,
     flight_num              TEXT        NOT NULL,
     status_detail           TEXT,
@@ -41,8 +41,7 @@ CREATE TABLE IF NOT EXISTS public.flights (
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_flights_run_sched
-    ON public.flights (ingest_run_id, flight_num, sched_dep, dest_iata);
+-- Primary key on flight_id ensures uniqueness per upstream flight.
 CREATE INDEX IF NOT EXISTS idx_flights_sched_dep ON public.flights (sched_dep);
 CREATE INDEX IF NOT EXISTS idx_flights_sched_arr ON public.flights (sched_arr);
 CREATE INDEX IF NOT EXISTS idx_flights_airline_iata ON public.flights (airline_iata);

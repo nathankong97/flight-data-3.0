@@ -15,7 +15,8 @@ def make_payload(**overrides):
                                     {
                                         "flight": {
                                             "identification": {
-                                                "number": {"default": "NH123"}
+                                                "number": {"default": "NH123"},
+                                                "row": 5730365369
                                             },
                                             "status": {"text": "Scheduled"},
                                             "aircraft": {
@@ -94,6 +95,7 @@ def test_extract_departure_records_parses_fields():
     assert len(records) == 1
     record = records[0]
     assert isinstance(record, FlightRecord)
+    assert record.flight_id == 5730365369
     assert record.flight_num == "NH123"
     assert record.status_detail == "Scheduled"
     assert record.aircraft_code == "789"
