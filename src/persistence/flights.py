@@ -122,6 +122,16 @@ UPSERT_SQL_WITH_ID = """
         dest_lng = EXCLUDED.dest_lng
 """
 
+# Pre-clean duplicates on the legacy composite key when using flight_id to insert.
+DELETE_LEGACY_DUPES_SQL = """
+    DELETE FROM flights
+    WHERE ingest_run_id = %(ingest_run_id)s
+      AND flight_num = %(flight_num)s
+      AND sched_dep = %(sched_dep)s
+      AND dest_iata = %(dest_iata)s
+      AND (flight_id IS DISTINCT FROM %(flight_id)s)
+"""
+
 # Legacy upsert for deployments without `flight_id` column yet
 UPSERT_SQL_LEGACY = """
     INSERT INTO flights (
@@ -313,6 +323,11 @@ def upsert_flights(
         valid_records: List[FlightRecord] = [
             r for r in records if r.flight_id is not None
         ]
+        # Remove any existing rows with the same legacy composite key but a different
+        # flight_id to prevent conflicts on the legacy unique index.
+        if valid_records:
+            _params = [record.to_db_params(ingest_run_id) for record in valid_records]
+            db_client.executemany(DELETE_LEGACY_DUPES_SQL, _params)
         query = UPSERT_SQL_WITH_ID
     else:
         # Legacy path: rely on per-run uniqueness
