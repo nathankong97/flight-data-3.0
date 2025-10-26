@@ -8,7 +8,7 @@ from src.api import FlightRadarClient
 from src.config import load_config, AppConfig, REPO_ROOT
 from src.db import DatabaseClient
 from src.jobs import RunConfig, run_job
-from src.logging_utils import configure_logging
+from src.logging_utils import configure_logging, perf_span
 
 
 def parse_args() -> argparse.Namespace:
@@ -95,7 +95,11 @@ def main() -> int:
     api_client = FlightRadarClient()
 
     try:
-        run_job(config, db_client, api_client, run_config)
+        with perf_span(
+            "job.total",
+            tags={"region": run_config.region, "app": config.app_name},
+        ):
+            run_job(config, db_client, api_client, run_config)
     finally:
         api_client.close()
         db_client.close()

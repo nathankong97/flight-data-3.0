@@ -4,6 +4,7 @@ import logging
 from typing import Dict
 
 from src.db import DatabaseClient
+from src.logging_utils import perf
 
 LOGGER = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ COORDINATE_QUERY = """
 """
 
 
+@perf("reference.load_coordinates", tags={"component": "reference"})
 def load_coordinates(db_client: DatabaseClient) -> Dict[str, Dict[str, float]]:
     """Return a mapping of IATA code to latitude/longitude."""
 

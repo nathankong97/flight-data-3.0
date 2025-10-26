@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, replace, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional
+from src.logging_utils import perf
 
 
 DATA_PATH: Iterable[str] = (
@@ -180,6 +181,7 @@ class FlightRecord:
         }
 
 
+@perf("transform.extract_departure_records", tags={"component": "transform"})
 def extract_departure_records(
     payload: Mapping[str, Any],
     origin_code: str,

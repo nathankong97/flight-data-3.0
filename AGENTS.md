@@ -8,7 +8,7 @@
 - Airport lists in `data/airport_<region>.txt` are ordered by priority; pagination logic (`src/pagination.py`) depends on their position, so maintain the intended sequence when editing.
 
 ## Build, Test, and Development Commands
-- `python -m venv .venv && source .venv/bin/activate` — create and enter an isolated virtual environment.
+- `python -m venv .venv && source .venv/bin/activate` — create and enter an isolated virtual environment. Always activate the venv before running any project commands (`pytest`, scripts, formatters).
 - `python -m pip install -r requirements.txt` — install runtime and tooling dependencies; keep pins current.
 - `black src tests` — auto-format files before committing to ensure consistent whitespace and wrapping.
 - `ruff check src tests` — run static analysis; add `--fix` when safe to apply autofixes locally.

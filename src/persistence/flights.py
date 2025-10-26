@@ -4,6 +4,7 @@ from typing import Iterable, List
 
 from src.db import DatabaseClient
 from src.transform import FlightRecord
+from src.logging_utils import perf
 
 
 # Upsert when the schema includes `flight_id` primary key (preferred)
@@ -263,6 +264,7 @@ def _schema_has_flight_id(db_client: DatabaseClient) -> bool:
         return False
 
 
+@perf("db.upsert_flights", tags={"component": "db"})
 def upsert_flights(
     db_client: DatabaseClient,
     ingest_run_id: str,

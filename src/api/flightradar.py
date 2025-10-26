@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 
 import requests
+from src.logging_utils import perf
 
 BASE_URL = "https://api.flightradar24.com/common/v1/airport.json"
 HEADERS = {
@@ -39,6 +40,7 @@ class FlightRadarClient:
             params["plugin-setting[schedule][timestamp]"] = timestamp
         return params
 
+    @perf("api.fetch_departures", tags={"component": "api"})
     def fetch_departures(
         self,
         airport_code: str,

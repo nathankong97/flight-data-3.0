@@ -13,6 +13,7 @@ from src.db import DatabaseClient
 from src.pagination import page_for_index
 from src.persistence import upsert_flights
 from src.reference import load_coordinates
+from src.logging_utils import perf, perf_span
 from src.transform import extract_departure_records
 
 LOGGER = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ def _page_sequence(start_page: int, max_pages: Optional[int]) -> List[int]:
     return pages[:max_pages]
 
 
+@perf("jobs.run_job", tags={"component": "jobs"})
 def run_job(
     config: AppConfig,
     db_client: DatabaseClient,
@@ -69,47 +71,57 @@ def run_job(
             pages,
         )
 
-        for page in pages:
-            payload = _fetch_with_retries(
-                api_client,
-                airport,
-                page,
-                job_config.limit_per_page,
-                job_config.retry_attempts,
-                job_config.retry_delay_seconds,
-            )
-            if not payload:
-                continue
-
-            records = extract_departure_records(
-                payload,
-                airport,
-                coordinates=coordinates,
-            )
-            if not records:
-                LOGGER.info("No records returned for %s page %s", airport, page)
-                # Even when empty, honor page delay throttling
-                if job_config.page_delay_seconds > 0 and page != pages[-1]:
-                    LOGGER.debug(
-                        "Sleeping %.1fs between pages for %s",
-                        job_config.page_delay_seconds,
-                        airport,
-                    )
-                    time.sleep(job_config.page_delay_seconds)
-                continue
-
-            upsert_count = upsert_flights(db_client, ingest_run_id, records)
-            LOGGER.info(
-                "Upserted %s records for %s page %s", upsert_count, airport, page
-            )
-            # Throttle between page fetches
-            if job_config.page_delay_seconds > 0 and page != pages[-1]:
-                LOGGER.debug(
-                    "Sleeping %.1fs between pages for %s",
-                    job_config.page_delay_seconds,
+        with perf_span(
+            "jobs.airport_loop",
+            tags={"airport": airport, "index": index},
+            logger=LOGGER,
+        ):
+            for page in pages:
+                payload = _fetch_with_retries(
+                    api_client,
                     airport,
+                    page,
+                    job_config.limit_per_page,
+                    job_config.retry_attempts,
+                    job_config.retry_delay_seconds,
                 )
-                time.sleep(job_config.page_delay_seconds)
+                if not payload:
+                    continue
+
+                with perf_span(
+                    "jobs.page_loop",
+                    tags={"airport": airport, "page": page},
+                    logger=LOGGER,
+                ):
+                    records = extract_departure_records(
+                        payload,
+                        airport,
+                        coordinates=coordinates,
+                    )
+                    if not records:
+                        LOGGER.info("No records returned for %s page %s", airport, page)
+                        # Even when empty, honor page delay throttling
+                        if job_config.page_delay_seconds > 0 and page != pages[-1]:
+                            LOGGER.debug(
+                                "Sleeping %.1fs between pages for %s",
+                                job_config.page_delay_seconds,
+                                airport,
+                            )
+                            time.sleep(job_config.page_delay_seconds)
+                        continue
+
+                    upsert_count = upsert_flights(db_client, ingest_run_id, records)
+                    LOGGER.info(
+                        "Upserted %s records for %s page %s", upsert_count, airport, page
+                    )
+                    # Throttle between page fetches
+                    if job_config.page_delay_seconds > 0 and page != pages[-1]:
+                        LOGGER.debug(
+                            "Sleeping %.1fs between pages for %s",
+                            job_config.page_delay_seconds,
+                            airport,
+                        )
+                        time.sleep(job_config.page_delay_seconds)
 
         # Throttle between airports
         if (
@@ -125,6 +137,7 @@ def run_job(
     return ingest_run_id
 
 
+@perf("jobs.fetch_with_retries", tags={"component": "jobs"})
 def _fetch_with_retries(
     api_client: FlightRadarClient,
     airport: str,

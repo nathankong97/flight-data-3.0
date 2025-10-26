@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, Generator, Iterable, Optional
 import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+from src.logging_utils import perf
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class DatabaseClient:
             with conn.transaction():
                 yield conn
 
+    @perf("db.execute", tags={"component": "db"})
     def execute(self, query: str, params: Optional[Dict[str, Any]] = None) -> None:
         """Execute a write statement (INSERT/UPDATE/DELETE)."""
         with self.transaction() as conn:
@@ -64,6 +66,7 @@ class DatabaseClient:
                 LOGGER.debug("Executing query: %s params=%s", query, params)
                 cur.execute(query, params or {})
 
+    @perf("db.executemany", tags={"component": "db"})
     def executemany(self, query: str, param_list: Iterable[Dict[str, Any]]) -> None:
         """Execute the same statement for multiple parameter sets within one transaction."""
         params = list(param_list)
@@ -80,6 +83,7 @@ class DatabaseClient:
                 )
                 cur.executemany(query, params)
 
+    @perf("db.fetch_all", tags={"component": "db"})
     def fetch_all(
         self,
         query: str,
@@ -92,6 +96,7 @@ class DatabaseClient:
                 cur.execute(query, params or {})
                 return cur.fetchall()
 
+    @perf("db.fetch_one", tags={"component": "db"})
     def fetch_one(
         self,
         query: str,
