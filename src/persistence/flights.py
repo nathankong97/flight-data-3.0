@@ -237,31 +237,66 @@ UPSERT_SQL_LEGACY = """
 
 
 def _schema_has_flight_id(db_client: DatabaseClient) -> bool:
+    """Return True if the schema expects inserts keyed by flight_id.
+
+    This is true when:
+    - The column exists AND
+      - it is part of a PRIMARY KEY or UNIQUE constraint, or
+      - it is marked NOT NULL (indicating legacy path would fail).
+
+    Falls back to False only when the column is absent.
+    """
     try:
-        col = db_client.fetch_one(
+        row = db_client.fetch_one(
             """
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_name = 'flights'
-              AND column_name = 'flight_id'
-            LIMIT 1
+            SELECT
+              -- Column exists
+              EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'flights' AND column_name = 'flight_id'
+              ) AS has_col,
+              -- Column is NOT NULL
+              EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'flights' AND column_name = 'flight_id' AND is_nullable = 'NO'
+              ) AS not_null,
+              -- Column participates in a PK
+              EXISTS (
+                SELECT 1
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON tc.constraint_name = kcu.constraint_name
+                 AND tc.table_schema = kcu.table_schema
+                WHERE tc.table_name = 'flights'
+                  AND kcu.column_name = 'flight_id'
+                  AND tc.constraint_type = 'PRIMARY KEY'
+              ) AS is_pk,
+              -- Column has a UNIQUE constraint
+              EXISTS (
+                SELECT 1
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON tc.constraint_name = kcu.constraint_name
+                 AND tc.table_schema = kcu.table_schema
+                WHERE tc.table_name = 'flights'
+                  AND kcu.column_name = 'flight_id'
+                  AND tc.constraint_type = 'UNIQUE'
+              ) AS is_unique
             """
-        )
-        if not col:
+        ) or {}
+
+        has_col = bool(row.get("has_col"))
+        if not has_col:
             return False
-        uniq = db_client.fetch_one(
-            """
-            SELECT 1
-            FROM pg_indexes
-            WHERE tablename = 'flights'
-              AND indexdef ILIKE '%UNIQUE%'
-              AND indexdef ILIKE '%(flight_id%'
-            LIMIT 1
-            """
-        )
-        return bool(uniq)
+
+        # Prefer explicit constraints; otherwise treat NOT NULL as requiring flight_id
+        is_pk = bool(row.get("is_pk"))
+        is_unique = bool(row.get("is_unique"))
+        not_null = bool(row.get("not_null"))
+        return is_pk or is_unique or not_null
     except Exception:
-        return False
+        # Be conservative: if detection fails, assume flight_id is required
+        return True
 
 
 @perf("db.upsert_flights", tags={"component": "db"})

@@ -137,7 +137,6 @@ def run_job(
     return ingest_run_id
 
 
-@perf("jobs.fetch_with_retries", tags={"component": "jobs"})
 def _fetch_with_retries(
     api_client: FlightRadarClient,
     airport: str,

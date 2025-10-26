@@ -46,3 +46,8 @@ CREATE INDEX IF NOT EXISTS idx_flights_sched_dep ON public.flights (sched_dep);
 CREATE INDEX IF NOT EXISTS idx_flights_sched_arr ON public.flights (sched_arr);
 CREATE INDEX IF NOT EXISTS idx_flights_airline_iata ON public.flights (airline_iata);
 CREATE INDEX IF NOT EXISTS idx_flights_origin_dest ON public.flights (origin_iata, dest_iata);
+
+-- Legacy composite unique key to support fallback upsert path if detection
+-- cannot use flight_id for any reason.
+CREATE UNIQUE INDEX IF NOT EXISTS flights_legacy_uq
+    ON public.flights (ingest_run_id, flight_num, sched_dep, dest_iata);

@@ -58,7 +58,6 @@ class DatabaseClient:
             with conn.transaction():
                 yield conn
 
-    @perf("db.execute", tags={"component": "db"})
     def execute(self, query: str, params: Optional[Dict[str, Any]] = None) -> None:
         """Execute a write statement (INSERT/UPDATE/DELETE)."""
         with self.transaction() as conn:
@@ -83,7 +82,6 @@ class DatabaseClient:
                 )
                 cur.executemany(query, params)
 
-    @perf("db.fetch_all", tags={"component": "db"})
     def fetch_all(
         self,
         query: str,
@@ -96,7 +94,6 @@ class DatabaseClient:
                 cur.execute(query, params or {})
                 return cur.fetchall()
 
-    @perf("db.fetch_one", tags={"component": "db"})
     def fetch_one(
         self,
         query: str,
