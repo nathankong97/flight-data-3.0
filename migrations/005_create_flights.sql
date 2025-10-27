@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS public.flights (
     -- Upstream unique identifier; nullable to allow legacy inserts when missing.
     -- A separate UNIQUE index enforces conflicts when present.
-    flight_id               BIGINT,
+    flight_id               BIGINT      PRIMARY KEY,
     ingest_run_id           UUID        NOT NULL,
     flight_num              TEXT        NOT NULL,
     status_detail           TEXT,
@@ -53,8 +53,3 @@ CREATE INDEX IF NOT EXISTS idx_flights_sched_dep ON public.flights (sched_dep);
 CREATE INDEX IF NOT EXISTS idx_flights_sched_arr ON public.flights (sched_arr);
 CREATE INDEX IF NOT EXISTS idx_flights_airline_iata ON public.flights (airline_iata);
 CREATE INDEX IF NOT EXISTS idx_flights_origin_dest ON public.flights (origin_iata, dest_iata);
-
--- Legacy composite unique key to support fallback upsert path when the upstream
--- flight_id is missing. This allows deterministic updates within an ingest run.
-CREATE UNIQUE INDEX IF NOT EXISTS flights_legacy_uq
-    ON public.flights (ingest_run_id, flight_num, sched_dep, dest_iata);
