@@ -46,14 +46,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--page-delay",
         type=float,
-        default=3.0,
-        help="Seconds to wait between page fetches (default: 3.0).",
+        default=2.0,
+        help="Seconds to wait between page fetches (default: 2.0).",
     )
     parser.add_argument(
         "--airport-delay",
         type=float,
-        default=20.0,
-        help="Seconds to wait between airports (default: 20.0).",
+        default=15.0,
+        help="Seconds to wait between airports (default: 15.0).",
     )
     return parser.parse_args()
 
