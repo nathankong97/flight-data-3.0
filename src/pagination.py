@@ -20,13 +20,15 @@ def page_for_index(region: str, index: int) -> int:
         return -2
 
     if region_upper == "JP":
-        if count <= 5:
+        if count <= 3:
             return -14
-        return -5
+        if count <= 5:
+            return -9
+        return -3
 
     if region_upper == "CN":
         if count <= 10:
-            return -15
+            return -14
         if count <= 20:
             return -9
         if count <= 40:

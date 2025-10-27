@@ -8,8 +8,8 @@
 - Airport lists in `data/airport_<region>.txt` are ordered by priority; pagination logic (`src/pagination.py`) depends on their position, so maintain the intended sequence when editing.
 
 ## Build, Test, and Development Commands
-- `python -m venv .venv && source .venv/bin/activate` — create and enter an isolated virtual environment. Always activate the venv before running any project commands (`pytest`, scripts, formatters).
-- `python -m pip install -r requirements.txt` — install runtime and tooling dependencies; keep pins current.
+- `python3 -m venv .venv && source .venv/bin/activate` — create and enter an isolated virtual environment. Always activate the venv before running any project commands (`pytest`, scripts, formatters).
+- `python3 -m pip install -r requirements.txt` — install runtime and tooling dependencies; keep pins current.
 - `black src tests` — auto-format files before committing to ensure consistent whitespace and wrapping.
 - `ruff check src tests` — run static analysis; add `--fix` when safe to apply autofixes locally.
 - `pytest -q` — execute the test suite; use `pytest --cov=src --cov-report=term-missing` for coverage validation.
@@ -41,7 +41,7 @@
 - Use the shared helper in `src/logging_utils.py` (add if missing) to standardize formatting, timestamps, and file naming.
 
 ## Database & Persistence
-- PostgreSQL (15+) is the authoritative datastore for structured flight records; local development can use `docker run --name flight-db -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:15`.
+- PostgreSQL (13+) is the authoritative datastore for structured flight records; local development can use `docker run --name flight-db -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:15`.
 - Manage schema migrations with your preferred tool (e.g., Alembic) and keep migration scripts under `migrations/`.
 - Store connection details in `.env` (ignored in git) with documented defaults in `.env.example`.
 
