@@ -119,5 +119,9 @@ def fake_pool(fake_conn: FakeConnection) -> Generator[FakePool, None, None]:
 
 @pytest.fixture
 def airlines_sample_path() -> Path:
-    """Path to a deterministic sample filtered airlines list for tests."""
-    return Path("tests/fixtures/filtered_airlines_sample.txt")
+    """Absolute path to the sample filtered airlines list.
+
+    Resolves relative to this tests/ directory to be robust to
+    the current working directory used to invoke pytest.
+    """
+    return Path(__file__).resolve().parent / "fixtures" / "filtered_airlines_sample.txt"
