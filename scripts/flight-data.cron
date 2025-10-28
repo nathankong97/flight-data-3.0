@@ -1,0 +1,9 @@
+# JP daily 10:00 US East Timezone
+0 10 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job JP
+
+# CN daily 11:00 US East Timezone
+0 11 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job CN
+
+# US daily 13:00, 22:00 US East Timezone
+0 13 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job US
+0 22 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job US
