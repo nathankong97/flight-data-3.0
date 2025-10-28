@@ -50,7 +50,17 @@ def build_view_sql(blocklist_codes: List[str]) -> str:
     Returns:
         Complete SQL statement string to recreate the view.
     """
-    in_list = ",".join(quote_literal(c) for c in blocklist_codes) if blocklist_codes else None
+    # Normalize to upper-case and deduplicate while preserving order
+    normalized: List[str] = []
+    seen = set()
+    for c in blocklist_codes:
+        u = str(c).strip().upper()
+        if not u or u in seen:
+            continue
+        seen.add(u)
+        normalized.append(u)
+
+    in_list = ",".join(quote_literal(c) for c in normalized) if normalized else None
 
     blocklist_clause = (
         f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
