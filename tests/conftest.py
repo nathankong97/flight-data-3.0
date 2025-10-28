@@ -1,4 +1,8 @@
-"""Shared pytest fixtures for the flight_data package tests."""
+"""Shared pytest fixtures for the flight_data package tests.
+
+Provides reusable fakes and configuration objects to keep tests
+deterministic and isolated, following AGENTS.md guidance.
+"""
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -11,7 +15,11 @@ from src.config import AppConfig
 
 @pytest.fixture
 def app_config(tmp_path: Path) -> AppConfig:
-    """Provide an AppConfig pointing at a temporary log directory."""
+    """Application config fixture.
+
+    Points logging to a temporary directory and uses a local test
+    database URL. Avoids touching real user config or network.
+    """
     return AppConfig(
         database_url="postgresql://user:pass@localhost:5432/db",
         log_directory=tmp_path,
@@ -98,10 +106,18 @@ class FakePool:
 
 @pytest.fixture
 def fake_conn() -> FakeConnection:
+    """In-memory fake DB connection used by db client tests."""
     return FakeConnection()
 
 
 @pytest.fixture
 def fake_pool(fake_conn: FakeConnection) -> Generator[FakePool, None, None]:
+    """In-memory fake connection pool wrapping ``fake_conn``."""
     pool = FakePool(fake_conn)
     yield pool
+
+
+@pytest.fixture
+def airlines_sample_path() -> Path:
+    """Path to a deterministic sample filtered airlines list for tests."""
+    return Path("tests/fixtures/filtered_airlines_sample.txt")

@@ -1,24 +1,14 @@
-import sys
 from pathlib import Path
 
-
-# Ensure repo root is on sys.path for absolute imports like src.admin.*
-REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.admin.update_flights_commercial_view import (  # noqa: E402
+from src.admin.update_flights_commercial_view import (
     build_view_sql,
     load_airline_codes,
     quote_literal,
 )
 
 
-def test_load_airline_codes_dedup_upper_ignores_blanks(tmp_path: Path) -> None:
-    p = tmp_path / "codes.txt"
-    p.write_text("\n fdX \nNCA\n\n nca \nNULL\n", encoding="utf-8")
-
-    codes = load_airline_codes(p)
+def test_load_airline_codes_dedup_upper_ignores_blanks(airlines_sample_path: Path) -> None:
+    codes = load_airline_codes(airlines_sample_path)
 
     assert codes == ["FDX", "NCA", "NULL"]
 
@@ -44,4 +34,3 @@ def test_build_view_sql_includes_blocklist_and_predicates() -> None:
 def test_build_view_sql_without_blocklist_omits_clause() -> None:
     sql = build_view_sql([])
     assert "UPPER(COALESCE(f.airline_icao" not in sql
-
