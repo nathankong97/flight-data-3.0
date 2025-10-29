@@ -57,3 +57,13 @@ def test_proxy_build_smoke_stage1_stage2() -> None:
     # Pool should be constructed (maybe empty if no survivors)
     assert pool is not None
 
+    # Emit a brief summary so you can see results when running with -s
+    print(
+        f"proxy_counts fetched={counts['fetched']} "
+        f"stage1_pass={counts['stage1']} stage2_pass={counts['stage2']}"
+    )
+    if survivors:
+        preview = ", ".join(f"{p.host}:{p.port}" for p in survivors[:5])
+        print(f"proxy_survivors_sample: {preview}")
+    else:
+        print("proxy_survivors_sample: <none>")
