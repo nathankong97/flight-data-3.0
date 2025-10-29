@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+import requests
 
 from src.api.flightradar import FlightRadarClient, BASE_URL, HEADERS
 
@@ -25,6 +26,8 @@ def test_fetch_departures_builds_request(mock_session):
     assert args[0] == BASE_URL
     assert kwargs["headers"] == HEADERS
     assert kwargs["timeout"] == 5
+    assert "proxies" in kwargs
+    assert kwargs["proxies"] is None
     params = kwargs["params"]
     assert params == {
         "code": "HND",
@@ -48,3 +51,45 @@ def test_fetch_departures_validates_inputs(mock_session, airport_code, page, lim
     client = FlightRadarClient(session=mock_session)
     with pytest.raises(ValueError):
         client.fetch_departures(airport_code, page=page, limit=limit)
+
+
+def test_fetch_departures_uses_proxies_when_provided(mock_session):
+    response = MagicMock()
+    response.json.return_value = {"data": []}
+    response.raise_for_status.return_value = None
+    mock_session.get.return_value = response
+
+    proxies_mapping = {"http": "http://1.1.1.1:80", "https": "http://1.1.1.1:80"}
+    client = FlightRadarClient(
+        session=mock_session,
+        get_proxies=lambda: proxies_mapping,
+    )
+
+    client.fetch_departures("HND")
+
+    _, kwargs = mock_session.get.call_args
+    assert kwargs["proxies"] == proxies_mapping
+
+
+def test_fetch_departures_reports_proxy_failure_on_exception(mock_session):
+    def raising_get(*args, **kwargs):
+        raise requests.RequestException("proxy failed")
+
+    mock_session.get.side_effect = raising_get
+
+    called = {}
+
+    def report_failure(mapping):
+        called["mapping"] = mapping
+
+    proxies_mapping = {"http": "http://2.2.2.2:8080", "https": "http://2.2.2.2:8080"}
+    client = FlightRadarClient(
+        session=mock_session,
+        get_proxies=lambda: proxies_mapping,
+        report_proxy_failure=report_failure,
+    )
+
+    with pytest.raises(requests.RequestException):
+        client.fetch_departures("HND")
+
+    assert called["mapping"] == proxies_mapping

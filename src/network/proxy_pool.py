@@ -82,10 +82,10 @@ def _parse_proxy_line(line: str) -> Optional[ProxyEndpoint]:
 
 
 def fetch_proxy_list(
-    source_url: str,
-    *,
-    timeout_seconds: float = 8.0,
-    limit: Optional[int] = 300,
+        source_url: str,
+        *,
+        timeout_seconds: float = 8.0,
+        limit: Optional[int] = 300,
 ) -> List[ProxyEndpoint]:
     """Fetch and parse a public proxy list.
 
@@ -132,12 +132,12 @@ def _proxies_mapping(proxy: ProxyEndpoint) -> Dict[str, str]:
 
 
 def validate_proxy_generic(
-    proxy: ProxyEndpoint,
-    *,
-    url: str,
-    connect_timeout: float = 2.0,
-    read_timeout: float = 4.0,
-    accept_status: Sequence[int] = (200,),
+        proxy: ProxyEndpoint,
+        *,
+        url: str,
+        connect_timeout: float = 2.0,
+        read_timeout: float = 4.0,
+        accept_status: Sequence[int] = (200,),
 ) -> ProxyProbe:
     """Validate a proxy by issuing a small HTTPS GET to a generic endpoint.
 
@@ -182,9 +182,9 @@ def validate_proxy_generic(
 
 
 def validate_proxy_custom(
-    proxy: ProxyEndpoint,
-    *,
-    probe: Callable[[Dict[str, str]], Tuple[bool, Optional[int], Optional[str]]],
+        proxy: ProxyEndpoint,
+        *,
+        probe: Callable[[Dict[str, str]], Tuple[bool, Optional[int], Optional[str]]],
 ) -> ProxyProbe:
     """Validate a proxy via a caller-provided probe function.
 
@@ -224,11 +224,11 @@ class ProxyPool:
     """
 
     def __init__(
-        self,
-        proxies: Iterable[ProxyEndpoint],
-        *,
-        max_failures: int = 2,
-        strategy: str = "round_robin",
+            self,
+            proxies: Iterable[ProxyEndpoint],
+            *,
+            max_failures: int = 2,
+            strategy: str = "round_robin",
     ) -> None:
         self._proxies: List[ProxyEndpoint] = list(proxies)
         self._failures: Dict[Tuple[str, int], int] = {}
@@ -260,7 +260,7 @@ class ProxyPool:
         url = proxies_mapping.get("http") or proxies_mapping.get("https")
         if not url or not url.startswith("http://"):
             return
-        host_port = url[len("http://") :]
+        host_port = url[len("http://"):]
         if ":" not in host_port:
             return
         host, port_s = host_port.split(":", 1)
@@ -278,9 +278,9 @@ class ProxyPool:
 
     @staticmethod
     def _run_stage(
-        proxies: Sequence[ProxyEndpoint],
-        worker: Callable[[ProxyEndpoint], ProxyProbe],
-        max_workers: int,
+            proxies: Sequence[ProxyEndpoint],
+            worker: Callable[[ProxyEndpoint], ProxyProbe],
+            max_workers: int,
     ) -> List[ProxyProbe]:
         results: List[ProxyProbe] = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -304,20 +304,20 @@ class ProxyPool:
 
     @classmethod
     def build(
-        cls,
-        *,
-        source_url: str,
-        stage1_url: str,
-        stage2_probe: Callable[
-            [Dict[str, str]], Tuple[bool, Optional[int], Optional[str]]
-        ],
-        fetch_limit: int = 300,
-        survivors_max: int = 50,
-        connect_timeout: float = 2.0,
-        read_timeout: float = 4.0,
-        max_workers: int = 32,
-        latency_threshold_ms: Optional[float] = 1500.0,
-        strategy: str = "round_robin",
+            cls,
+            *,
+            source_url: str,
+            stage1_url: str,
+            stage2_probe: Callable[
+                [Dict[str, str]], Tuple[bool, Optional[int], Optional[str]]
+            ],
+            fetch_limit: int = 300,
+            survivors_max: int = 50,
+            connect_timeout: float = 10.0,
+            read_timeout: float = 10.0,
+            max_workers: int = 32,
+            latency_threshold_ms: Optional[float] = 15000.0,
+            strategy: str = "round_robin",
     ) -> Tuple["ProxyPool", List[ProxyEndpoint], Dict[str, int]]:
         """Fetch, validate, and assemble a proxy pool.
 
@@ -348,7 +348,7 @@ class ProxyPool:
             r
             for r in stage1_results
             if r.ok and (
-                latency_threshold_ms is None or r.latency_ms <= latency_threshold_ms
+                    latency_threshold_ms is None or r.latency_ms <= latency_threshold_ms
             )
         ]
 

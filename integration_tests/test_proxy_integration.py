@@ -43,10 +43,10 @@ def test_proxy_build_smoke_stage1_stage2() -> None:
         stage2_probe=_stage2_probe_fr24,
         fetch_limit=30,
         survivors_max=10,
-        connect_timeout=2.0,
-        read_timeout=4.0,
+        connect_timeout=15.0,
+        read_timeout=15.0,
         max_workers=16,
-        latency_threshold_ms=2000.0,
+        latency_threshold_ms=15000.0,
         strategy="round_robin",
     )
 

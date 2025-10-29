@@ -1,6 +1,6 @@
 """Client for the FlightRadar24 airport schedule endpoint."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import requests
 from src.logging_utils import perf
@@ -18,9 +18,27 @@ HEADERS = {
 class FlightRadarClient:
     """Simple wrapper around the FlightRadar airport schedule API."""
 
-    def __init__(self, session: Optional[requests.Session] = None, timeout: float = 10.0) -> None:
+    def __init__(
+        self,
+        session: Optional[requests.Session] = None,
+        timeout: float = 10.0,
+        get_proxies: Optional[Callable[[], Optional[Dict[str, str]]]] = None,
+        report_proxy_failure: Optional[Callable[[Dict[str, str]], None]] = None,
+    ) -> None:
+        """Initialize the API client.
+
+        Args:
+            session: Optional pre-configured Requests session.
+            timeout: Per-request timeout in seconds.
+            get_proxies: Optional callable returning a Requests ``proxies`` mapping
+                to route traffic via a proxy. If None, requests use direct network.
+            report_proxy_failure: Optional callback invoked when a request fails
+                while using a given proxies mapping.
+        """
         self._session = session or requests.Session()
         self._timeout = timeout
+        self._get_proxies = get_proxies
+        self._report_proxy_failure = report_proxy_failure
 
     def _build_params(
         self,
@@ -59,12 +77,29 @@ class FlightRadarClient:
             raise ValueError("limit must be positive")
 
         params = self._build_params(airport_code, page, limit, timestamp)
-        response = self._session.get(
-            BASE_URL,
-            headers=HEADERS,
-            params=params,
-            timeout=self._timeout,
-        )
+        proxies: Optional[Dict[str, str]] = None
+        if self._get_proxies is not None:
+            try:
+                proxies = self._get_proxies()
+            except Exception:  # pragma: no cover - defensive
+                proxies = None
+
+        try:
+            response = self._session.get(
+                BASE_URL,
+                headers=HEADERS,
+                params=params,
+                timeout=self._timeout,
+                proxies=proxies,
+            )
+        except Exception:
+            # Notify pool of failure for this proxies mapping if provided
+            if proxies and self._report_proxy_failure is not None:
+                try:
+                    self._report_proxy_failure(proxies)
+                except Exception:  # pragma: no cover - defensive
+                    pass
+            raise
         response.raise_for_status()
         return response.json()
 
