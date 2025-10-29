@@ -83,14 +83,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--proxy-connect-timeout",
         type=float,
-        default=2.0,
-        help="Proxy connect timeout in seconds (default: 2.0).",
+        default=10,
+        help="Proxy connect timeout in seconds (default: 10.0).",
     )
     parser.add_argument(
         "--proxy-read-timeout",
         type=float,
-        default=4.0,
-        help="Proxy read timeout in seconds (default: 4.0).",
+        default=10.0,
+        help="Proxy read timeout in seconds (default: 10.0).",
     )
     parser.add_argument(
         "--proxy-workers",
@@ -138,8 +138,8 @@ def main() -> int:
 
         def stage2_probe(proxies: dict[str, str]):
             params = {
-                "code": "HND",
-                "page": 1,
+                "code": random.choice(["HND", "SFO", "JFK", "HKG", "LHR", "YYZ"]),
+                "page": random.choice([-1, -2, 1]),
                 "limit": 1,
                 "plugin[]": "schedule",
                 "plugin-setting[schedule][mode]": "departures",
@@ -168,7 +168,7 @@ def main() -> int:
             connect_timeout=args.proxy_connect_timeout,
             read_timeout=args.proxy_read_timeout,
             max_workers=args.proxy_workers,
-            latency_threshold_ms=2000.0,
+            latency_threshold_ms=15000.0,
             strategy="round_robin",
         )
 
