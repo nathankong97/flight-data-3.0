@@ -51,6 +51,13 @@ def page_for_index(region: str, index: int) -> int:
             return -4
         return -3
 
+    if region_upper == "CA":
+        if count <= 3:
+            return -14
+        if count <=7:
+            return -5
+        return -2
+
     return -1
 
 
