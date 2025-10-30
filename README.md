@@ -89,6 +89,33 @@ We keep all raw data in `public.flights` and expose commercial-only flights via 
   - Verify (expect 0):
     - `SELECT COUNT(*) FROM public.flights_commercial WHERE UPPER(COALESCE(airline_icao,'')) IN ('NCA','PAC','FDX', ... );`
 
+### Optional Proxy (Concurrent Fetch)
+
+- Default behavior: no proxy, sequential fetching (airports → pages).
+- When enabled with `--use-proxy`, the job:
+  - Fetches a public HTTP proxy list (ip:port) from a maintained source.
+  - Validates proxies in two stages: a generic HTTPS probe, then a small FlightRadar24 request.
+  - Uses the surviving proxies for concurrent fetching; evicts failing proxies during the run.
+  - Falls back to direct, sequential fetching if no survivors are available.
+
+- CLI flags (see `scripts/run_job.py`):
+  - `--use-proxy` — enable proxy validation and concurrent fetching (default: off)
+  - `--proxy-fetch-limit` — cap initial proxies fetched (default: 300)
+  - `--proxy-survivor-max` — cap validated proxies kept for rotation (default: 50)
+  - `--proxy-stage1-url` — generic validation URL (default: `https://httpbin.org/ip`)
+  - `--proxy-connect-timeout` — connect timeout seconds for validation (default: 2.0)
+  - `--proxy-read-timeout` — read timeout seconds for validation (default: 4.0)
+  - `--proxy-workers` — workers used during validation (default: 16)
+
+- Concurrency: when proxies are enabled and survivors exist, the runner uses a thread pool sized to `min(survivors, 8)` and processes airport pages concurrently. Without proxies, the existing sequential flow is preserved.
+
+- Example (enable proxies with a small sample):
+  - `python3 scripts/run_job.py JP --use-proxy --proxy-fetch-limit 30 --proxy-survivor-max 10`
+
+- Notes:
+  - Only public API calls are proxied; database access and configuration are never sent through proxies.
+  - The proxy list is volatile; counts vary by run. The job logs fetched/stage1/stage2 counts.
+
 ## Secrets & Remote Access
 
 - Do not commit credentials. Keep `.env` untracked (already in `.gitignore`).
