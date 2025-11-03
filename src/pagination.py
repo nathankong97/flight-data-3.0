@@ -58,6 +58,16 @@ def page_for_index(region: str, index: int) -> int:
             return -5
         return -2
 
+    if region_upper == "EA":
+        if count <= 5:
+            return -9
+        return -5
+
+    if region_upper == "TW":
+        if count <= 1:
+            return -9
+        return -2
+
     return -1
 
 

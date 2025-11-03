@@ -2,7 +2,7 @@
 0 10 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job JP
 
 # CN daily 11:00 US East Timezone
-0 11 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job CN
+0 11 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job CN --use-proxy
 
 # US daily 13:00, 22:00 US East Timezone
 0 13 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job US
@@ -10,3 +10,10 @@
 
 # CA daily 23:30 US East Timezone
 30 23 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job CA --use-proxy
+
+# EA daily 11:30 US East Timezone
+# EA - East Asia, indicating east of the Asia (South, East, Southeast) excluding CN, TW, JP
+30 11 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job EA --use-proxy
+
+# TW daily 10:20 US East Timezone
+20 10 * * * cd ~/pi/flight-data-3.0 && ~/pi/flight-data-3.0/.venv/bin/python -m scripts.run_job TW --use-proxy
