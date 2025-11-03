@@ -1,44 +1,36 @@
-# Flight Data 3.0
+# Flight Data 3.0 ✈️
 
-Ingest scheduled flight departures from FlightRadar24, transform them into structured records, and
-persist them to PostgreSQL. The repo includes a job runner, a typed transform layer, and a thin DB
-client backed by psycopg v3.
+Ingest scheduled departures from FlightRadar24, transform them into structured records, and persist them to PostgreSQL. Includes a job runner, typed transforms, and a thin psycopg v3 client.
 
-(2025 ver.)
+See `AGENTS.md` for conventions and contributor guidelines.
 
-- Runtime code lives under `src/`
-- Tests live under `tests/` and `integration_tests/`
-- Airport lists live under `data/airport_<REGION>.txt` (order matters for pagination)
-
-See `AGENTS.md` for project conventions and contributor guidelines.
-
-## Quickstart
+## Quickstart 🚀
 
 1) Create a virtual environment and install deps
 
-- Bash
-  - `python3 -m venv .venv && source .venv/bin/activate`
-  - `python3 -m pip install -r requirements.txt`
-- PowerShell
-  - `py -m venv .venv; .\\.venv\\Scripts\\Activate.ps1`
-  - `py -m pip install -r requirements.txt`
+- Linux/macOS:
+  ```bash
+  python3 -m venv .venv && source .venv/bin/activate
+  python3 -m pip install -r requirements.txt
+  ```
+- Windows (PowerShell):
+  ```powershell
+  py -m venv .venv; .\.venv\Scripts\Activate.ps1
+  py -m pip install -r requirements.txt
+  ```
 
 2) Configure environment
 
-- Copy `.env.example` to `.env` and adjust values for your setup.
-- Preferred: set a full DSN in `DATABASE_URL`, e.g.
-  - Bash: `export DATABASE_URL='postgresql://user:pass@host:5432/db'`
-  - PowerShell: `$env:DATABASE_URL = 'postgresql://user:pass@host:5432/db'`
-- Or provide components in `.env` (the loader builds a DSN):
-  - `HOST=localhost`, `USER=app`, `PASSWORD=secret`, `DB=flight_data`, `PORT=5432`
-- Optional logging overrides in `.env`:
-  - `LOG_DIR=logs` and `LOG_LEVEL=INFO` (default: INFO)
-  - `APP_NAME=flight-data` (used in log file names)
+- Copy `.env.example` to `.env` and adjust values.
+- Preferred: set a full DSN in `DATABASE_URL` (or provide `HOST`, `USER`, `PASSWORD`, `DB`, `PORT`).
+- Optional logging overrides in `.env`: `LOG_DIR`, `LOG_LEVEL`, `APP_NAME`.
 
 3) Run the job
 
 - Example (fetch JP airports, one page per airport):
- - `python3 scripts/run_job.py JP --max-pages 1 --limit 100`
+  ```bash
+  python3 scripts/run_job.py JP --max-pages 1 --limit 100
+  ```
 
 Logs are written per run to `logs/<app>-<run_id>.log` (see `src/logging_utils.py`).
 
@@ -46,103 +38,95 @@ For complete CLI usage, options, and examples, see `docs/run_job.md`.
 
 For performance logging helpers, see `docs/performance_tools.md`.
 
-## Project Layout
+## Project Layout 🧭
 
-- `src/api/` — HTTP clients (FlightRadar24)
+- `src/api/` — HTTP client (FlightRadar24)
 - `src/transform/` — parse and normalize API payloads into `FlightRecord`
 - `src/persistence/` — upsert helpers for the `flights` fact table
 - `src/db/` — psycopg v3 pool wrapper
 - `src/jobs/` — orchestration (fetch → transform → persist)
 - `src/reference/` — coordinate lookup from DB
-- `src/pagination.py` — index→page mapping per region
+- `src/pagination.py` — index/page mapping per region
 - `data/airport_<REGION>.txt` — ordered airport lists used by pagination (order matters)
 - `migrations/` — PostgreSQL DDL for reference and fact tables
 - `scripts/run_job.py` — CLI entrypoint
-- `scripts/update_flights_commercial_view.py` — update the commercial flights view from `data/filtered_airlines.txt`
+- `scripts/update_flights_commercial_view.py` — refresh the commercial flights view
 
-## Testing
+## Testing 🧪
 
-- Run unit tests: `pytest -q`
+- Unit tests: `pytest -q`
 - Skip integration tests: `pytest -q -m "not integration"`
-- Run only integration tests: `pytest -q -m integration`
+- Only integration tests: `pytest -q -m integration`
 
 Integration tests require a reachable PostgreSQL and (for API tests) outbound network access.
 
-## Database (PostgreSQL)
+## Database (PostgreSQL) 🗄️
 
-- Start a local Postgres via Docker:
-  - `docker run --name flight-db -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:15`
+- Start Postgres via Docker:
+  ```bash
+  docker run --name flight-db -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:15
+  ```
 - Set `DATABASE_URL`, for example:
-  - Bash: `export DATABASE_URL='postgresql://postgres:dev@127.0.0.1:5432/postgres'`
-  - PowerShell: `$env:DATABASE_URL = 'postgresql://postgres:dev@127.0.0.1:5432/postgres'`
-- Apply schema (DDL lives in `migrations/`), e.g.:
-  - `psql "$DATABASE_URL" -f migrations/001_create_airports.sql`
-  - `psql "$DATABASE_URL" -f migrations/002_create_airlines.sql`
-  - `psql "$DATABASE_URL" -f migrations/003_create_aircrafts.sql`
-  - `psql "$DATABASE_URL" -f migrations/004_create_countries.sql`
-  - `psql "$DATABASE_URL" -f migrations/005_create_flights.sql`
-  - `psql "$DATABASE_URL" -f migrations/006_create_flights_commercial_view.sql`
+  ```bash
+  export DATABASE_URL='postgresql://postgres:dev@127.0.0.1:5432/postgres'
+  ```
+  ```powershell
+  $env:DATABASE_URL = 'postgresql://postgres:dev@127.0.0.1:5432/postgres'
+  ```
+- Apply schema (DDL lives in `migrations/`):
+  ```bash
+  psql "$DATABASE_URL" -f migrations/001_create_airports.sql
+  psql "$DATABASE_URL" -f migrations/002_create_airlines.sql
+  psql "$DATABASE_URL" -f migrations/003_create_aircrafts.sql
+  psql "$DATABASE_URL" -f migrations/004_create_countries.sql
+  psql "$DATABASE_URL" -f migrations/005_create_flights.sql
+  psql "$DATABASE_URL" -f migrations/006_create_flights_commercial_view.sql
+  ```
 
 ### Commercial Flights View
 
-We keep all raw data in `public.flights` and expose commercial-only flights via the view
-`public.flights_commercial`.
+- Create with migration `006_create_flights_commercial_view.sql`.
+- Update airline blocklist in `data/filtered_airlines.txt`, then:
+  ```bash
+  python3 scripts/update_flights_commercial_view.py
+  ```
 
-- Initial creation: run `migrations/006_create_flights_commercial_view.sql` as above.
-- Update the airline blocklist in `data/filtered_airlines.txt` (one ICAO per line), then refresh the view:
-  - Ensure `DATABASE_URL` is set
-  - Run: `python3 scripts/update_flights_commercial_view.py`
-  - Verify (expect 0):
-    - `SELECT COUNT(*) FROM public.flights_commercial WHERE UPPER(COALESCE(airline_icao,'')) IN ('NCA','PAC','FDX', ... );`
+## Optional Proxy (Concurrent Fetch) 🔌
 
-### Optional Proxy (Concurrent Fetch)
-
-- Default behavior: no proxy, sequential fetching (airports → pages).
-- When enabled with `--use-proxy`, the job:
-  - Fetches a public HTTP proxy list (ip:port) from a maintained source.
-  - Validates proxies in two stages: a generic HTTPS probe, then a small FlightRadar24 request.
-  - Uses the surviving proxies for concurrent fetching; evicts failing proxies during the run.
+- Default: no proxy, sequential fetching.
+- With `--use-proxy` the job:
+  - Fetches a public HTTP proxy list (ip:port),
+  - Validates proxies in two stages (generic HTTPS; then FlightRadar24 probe),
+  - Uses survivors for concurrent fetching and evicts failing proxies,
   - Falls back to direct, sequential fetching if no survivors are available.
+- Concurrency: when survivors exist, a thread pool sized to `min(survivors, 8)` processes pages.
+- Example:
+  ```bash
+  python3 scripts/run_job.py JP --use-proxy --proxy-fetch-limit 30 --proxy-survivor-max 10
+  ```
 
-- CLI flags (see `scripts/run_job.py`):
-  - `--use-proxy` — enable proxy validation and concurrent fetching (default: off)
-  - `--proxy-fetch-limit` — cap initial proxies fetched (default: 300)
-  - `--proxy-survivor-max` — cap validated proxies kept for rotation (default: 50)
-  - `--proxy-stage1-url` — generic validation URL (default: `https://httpbin.org/ip`)
-  - `--proxy-connect-timeout` — connect timeout seconds for validation (default: 2.0)
-  - `--proxy-read-timeout` — read timeout seconds for validation (default: 4.0)
-  - `--proxy-workers` — workers used during validation (default: 16)
+## Secrets & Remote Access 🔐
 
-- Concurrency: when proxies are enabled and survivors exist, the runner uses a thread pool sized to `min(survivors, 8)` and processes airport pages concurrently. Without proxies, the existing sequential flow is preserved.
-
-- Example (enable proxies with a small sample):
-  - `python3 scripts/run_job.py JP --use-proxy --proxy-fetch-limit 30 --proxy-survivor-max 10`
-
-- Notes:
-  - Only public API calls are proxied; database access and configuration are never sent through proxies.
-  - The proxy list is volatile; counts vary by run. The job logs fetched/stage1/stage2 counts.
-
-## Secrets & Remote Access
-
-- Do not commit credentials. Keep `.env` untracked (already in `.gitignore`).
+- Do not commit credentials. `.env` is ignored.
 - Use SSH tunnels or cloud IAM tokens to avoid storing DB passwords on disk.
-  - Example tunnel: `ssh -N -L 5433:127.0.0.1:5432 user@server` and set
-    `DATABASE_URL=postgresql://app@127.0.0.1:5433/db?sslmode=require`.
+  ```bash
+  ssh -N -L 5433:127.0.0.1:5432 user@server
+  # DATABASE_URL=postgresql://app@127.0.0.1:5433/db?sslmode=require
+  ```
 
-## Developer Tips
+## Developer Tips 🛠️
 
-- Absolute imports (`src.`) keep modules importable without packaging
-- Code style: PEP 8; prefer type hints and Google-style docstrings
-- Optional tools (install locally):
-  - Format: `black src tests`
-  - Lint: `ruff check src tests`
+- Absolute imports (`src.`) keep modules importable without packaging.
+- PEP 8, type hints, Google-style docstrings.
+- Optional tools (install locally): `black src tests`, `ruff check src tests`.
 
-## Troubleshooting
+## Troubleshooting 🧰
 
-- "DATABASE_URL must be defined": set `DATABASE_URL` or component variables (`HOST/USER/PASSWORD/DB`)
-- API 4xx/5xx: rate limits can apply; try lowering `--limit` and adding retries
-- No rows ingested: confirm airport list for your region in `data/` and DB connectivity
+- "DATABASE_URL must be defined": set `DATABASE_URL` or component variables (`HOST/USER/PASSWORD/DB`).
+- API 4xx/5xx: rate limits can apply; try lowering `--limit` and adding retries.
+- No rows ingested: confirm airport list for your region in `data/` and DB connectivity.
 
 ---
 
-Happy flying!
+Happy flying! 🛫
+
