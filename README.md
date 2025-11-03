@@ -25,20 +25,26 @@ See `AGENTS.md` for project conventions and contributor guidelines.
 
 2) Configure environment
 
+- Copy `.env.example` to `.env` and adjust values for your setup.
 - Preferred: set a full DSN in `DATABASE_URL`, e.g.
   - Bash: `export DATABASE_URL='postgresql://user:pass@host:5432/db'`
   - PowerShell: `$env:DATABASE_URL = 'postgresql://user:pass@host:5432/db'`
-- Or provide components in a `.env` (git-ignored):
-  - `HOST=localhost`, `USER=app`, `PASSWORD=secret`, `DB=flights`, `PORT=5432`
-- Optional logging overrides:
+- Or provide components in `.env` (the loader builds a DSN):
+  - `HOST=localhost`, `USER=app`, `PASSWORD=secret`, `DB=flight_data`, `PORT=5432`
+- Optional logging overrides in `.env`:
   - `LOG_DIR=logs` and `LOG_LEVEL=INFO` (default: INFO)
+  - `APP_NAME=flight-data` (used in log file names)
 
 3) Run the job
 
 - Example (fetch JP airports, one page per airport):
-  - `python3 scripts/run_job.py JP --max-pages 1 --limit 100`
+ - `python3 scripts/run_job.py JP --max-pages 1 --limit 100`
 
 Logs are written per run to `logs/<app>-<run_id>.log` (see `src/logging_utils.py`).
+
+For complete CLI usage, options, and examples, see `docs/run_job.md`.
+
+For performance logging helpers, see `docs/performance_tools.md`.
 
 ## Project Layout
 

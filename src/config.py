@@ -3,6 +3,10 @@
 This module reads environment variables (optionally from an `.env` file) and
 produces an application configuration object consumed across the project.
 
+See `.env.example` for supported keys, including `DATABASE_URL` (or
+`HOST`/`USER`/`PASSWORD`/`DB`/`PORT`), `LOG_DIR`, `LOG_LEVEL`, and optional
+`APP_NAME`.
+
 Usage example:
 
     from src.config import load_config
