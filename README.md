@@ -12,11 +12,15 @@ See `AGENTS.md` for conventions and contributor guidelines.
   ```bash
   python3 -m venv .venv && source .venv/bin/activate
   python3 -m pip install -r requirements.txt
+  # Optional: developer tools (tests, coverage, formatter)
+  python3 -m pip install -r requirements-dev.txt
   ```
 - Windows (PowerShell):
   ```powershell
   py -m venv .venv; .\.venv\Scripts\Activate.ps1
   py -m pip install -r requirements.txt
+  # Optional: developer tools (tests, coverage, formatter)
+  py -m pip install -r requirements-dev.txt
   ```
 
 2) Configure environment
@@ -54,6 +58,9 @@ For performance logging helpers, see `docs/performance_tools.md`.
 
 ## Testing 🧪
 
+- Install dev tools first:
+  - Linux/macOS: `python3 -m pip install -r requirements-dev.txt`
+  - Windows: `py -m pip install -r requirements-dev.txt`
 - Unit tests: `pytest -q`
 - Skip integration tests: `pytest -q -m "not integration"`
 - Only integration tests: `pytest -q -m integration`
@@ -118,7 +125,10 @@ Integration tests require a reachable PostgreSQL and (for API tests) outbound ne
 
 - Absolute imports (`src.`) keep modules importable without packaging.
 - PEP 8, type hints, Google-style docstrings.
-- Optional tools (install locally): `black src tests`, `ruff check src tests`.
+- Formatting: use Black (configured via `pyproject.toml`):
+  ```bash
+  black src tests
+  ```
 
 ## Troubleshooting 🧰
 

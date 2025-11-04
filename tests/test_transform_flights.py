@@ -16,7 +16,7 @@ def make_payload(**overrides):
                                         "flight": {
                                             "identification": {
                                                 "number": {"default": "NH123"},
-                                                "row": 5730365369
+                                                "row": 5730365369,
                                             },
                                             "status": {"text": "Scheduled"},
                                             "aircraft": {

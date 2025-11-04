@@ -26,12 +26,14 @@ def test_parse_proxy_line_valid_and_invalid() -> None:
 
 
 def test_fetch_proxy_list_dedup_and_limit(monkeypatch: pytest.MonkeyPatch) -> None:
-    lines = "\n".join([
-        "1.1.1.1:80",
-        "2.2.2.2:8080",
-        "1.1.1.1:80",  # dup
-        "badline",
-    ])
+    lines = "\n".join(
+        [
+            "1.1.1.1:80",
+            "2.2.2.2:8080",
+            "1.1.1.1:80",  # dup
+            "badline",
+        ]
+    )
 
     def fake_get(url, timeout):  # type: ignore[no-redef]
         assert "http" in url
@@ -100,11 +102,13 @@ def test_proxy_pool_rotation_and_eviction() -> None:
 def test_build_uses_stage_filters(monkeypatch: pytest.MonkeyPatch) -> None:
     # Provide three endpoints
     monkeypatch.setattr(
-        proxy_mod, "fetch_proxy_list", lambda *a, **k: [
+        proxy_mod,
+        "fetch_proxy_list",
+        lambda *a, **k: [
             proxy_mod.ProxyEndpoint("1.1.1.1", 80),
             proxy_mod.ProxyEndpoint("2.2.2.2", 8080),
             proxy_mod.ProxyEndpoint("3.3.3.3", 3128),
-        ]
+        ],
     )
 
     # Stage 1 generic validates all
@@ -136,4 +140,3 @@ def test_build_uses_stage_filters(monkeypatch: pytest.MonkeyPatch) -> None:
     # Ensure pool returns a proxies mapping for requests
     mapping = pool.get_proxies_for_request()
     assert mapping and "http" in mapping
-

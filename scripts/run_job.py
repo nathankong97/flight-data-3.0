@@ -13,9 +13,7 @@ from src.network import ProxyPool
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run the flight data ingestion job."
-    )
+    parser = argparse.ArgumentParser(description="Run the flight data ingestion job.")
     parser.add_argument(
         "region",
         help="Region code matching airport list files (e.g., JP, US).",

@@ -10,6 +10,7 @@ def app_config(tmp_path):
     class Config:
         log_directory = tmp_path
         log_level = "INFO"
+
     return Config()
 
 

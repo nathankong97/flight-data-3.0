@@ -203,14 +203,13 @@ def extract_departure_records(
     records: List[FlightRecord] = []
     for item in departures:
         # Prefer published flight number; if absent (e.g., cancelled/private), use a placeholder
-        flight_num = _to_optional_str(
-            _nested_get(item, ["flight", "identification", "number", "default"])
-        ) or "-"
+        flight_num = (
+            _to_optional_str(_nested_get(item, ["flight", "identification", "number", "default"]))
+            or "-"
+        )
 
         record = FlightRecord(
-            flight_id=_to_optional_int(
-                _nested_get(item, ["flight", "identification", "row"])
-            ),
+            flight_id=_to_optional_int(_nested_get(item, ["flight", "identification", "row"])),
             flight_num=flight_num,
             status_detail=_nested_get(item, ["flight", "status", "text"]),
             aircraft_code=_nested_get(item, ["flight", "aircraft", "model", "code"]),
@@ -238,9 +237,7 @@ def extract_departure_records(
             origin_offset_dst=_to_optional_bool(
                 _nested_get(item, ["flight", "airport", "origin", "timezone", "isDst"])
             ),
-            origin_terminal=_nested_get(
-                item, ["flight", "airport", "origin", "info", "terminal"]
-            ),
+            origin_terminal=_nested_get(item, ["flight", "airport", "origin", "info", "terminal"]),
             origin_gate=_nested_get(item, ["flight", "airport", "origin", "info", "gate"]),
             dest_iata=_nested_get(item, ["flight", "airport", "destination", "code", "iata"]),
             dest_icao=_nested_get(item, ["flight", "airport", "destination", "code", "icao"]),
@@ -263,12 +260,8 @@ def extract_departure_records(
             sched_arr=_to_optional_int(
                 _nested_get(item, ["flight", "time", "scheduled", "arrival"])
             ),
-            real_dep=_to_optional_int(
-                _nested_get(item, ["flight", "time", "real", "departure"])
-            ),
-            real_arr=_to_optional_int(
-                _nested_get(item, ["flight", "time", "real", "arrival"])
-            ),
+            real_dep=_to_optional_int(_nested_get(item, ["flight", "time", "real", "departure"])),
+            real_arr=_to_optional_int(_nested_get(item, ["flight", "time", "real", "arrival"])),
             origin_lat=origin_lat,
             origin_lng=origin_lng,
             dest_lat=_to_optional_float(

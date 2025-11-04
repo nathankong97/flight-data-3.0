@@ -14,4 +14,3 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"Error updating flights_commercial view: {exc}", file=sys.stderr)
         sys.exit(1)
-

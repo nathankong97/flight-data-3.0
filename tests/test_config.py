@@ -101,8 +101,5 @@ def test_load_config_builds_url_from_components(tmp_path, monkeypatch):
 
     config = load_config(env_file)
 
-    assert (
-        config.database_url
-        == "postgresql://ingest:secret%21@db.internal:5432/flights"
-    )
+    assert config.database_url == "postgresql://ingest:secret%21@db.internal:5432/flights"
     assert config.log_directory == REPO_ROOT / "logs"

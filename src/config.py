@@ -117,9 +117,7 @@ def load_config(env_file: Optional[Path] = None) -> AppConfig:
     if not database_url:
         database_url = _build_database_url_from_components(merged, dotenv_values)
         if not database_url:
-            raise ValueError(
-                "DATABASE_URL (or HOST/USER/PASSWORD/DB combination) must be defined."
-            )
+            raise ValueError("DATABASE_URL (or HOST/USER/PASSWORD/DB combination) must be defined.")
 
     log_directory = Path(merged.get("LOG_DIR", REPO_ROOT / "logs"))
     if not log_directory.is_absolute():

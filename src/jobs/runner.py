@@ -126,9 +126,7 @@ def run_job(
                         continue
 
                     upsert_count = upsert_flights(db_client, ingest_run_id, records)
-                    LOGGER.info(
-                        "Upserted %s records for %s page %s", upsert_count, airport, page
-                    )
+                    LOGGER.info("Upserted %s records for %s page %s", upsert_count, airport, page)
                     # Throttle between page fetches
                     if job_config.page_delay_seconds > 0 and page != pages[-1]:
                         LOGGER.debug(
@@ -139,10 +137,7 @@ def run_job(
                         time.sleep(job_config.page_delay_seconds)
 
         # Throttle between airports
-        if (
-            job_config.airport_delay_seconds > 0
-            and index < len(airports) - 1
-        ):
+        if job_config.airport_delay_seconds > 0 and index < len(airports) - 1:
             LOGGER.debug(
                 "Sleeping %.1fs before next airport",
                 job_config.airport_delay_seconds,

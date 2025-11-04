@@ -257,8 +257,9 @@ def _schema_has_flight_id(db_client: DatabaseClient) -> bool:
     Falls back to False only when the column is absent.
     """
     try:
-        row = db_client.fetch_one(
-            """
+        row = (
+            db_client.fetch_one(
+                """
             SELECT
               -- Column exists
               EXISTS (
@@ -293,7 +294,9 @@ def _schema_has_flight_id(db_client: DatabaseClient) -> bool:
                   AND tc.constraint_type = 'UNIQUE'
               ) AS is_unique
             """
-        ) or {}
+            )
+            or {}
+        )
 
         has_col = bool(row.get("has_col"))
         if not has_col:
@@ -320,9 +323,7 @@ def upsert_flights(
     use_flight_id = _schema_has_flight_id(db_client)
     if use_flight_id:
         # Filter out records without a source flight_id (used as primary key).
-        valid_records: List[FlightRecord] = [
-            r for r in records if r.flight_id is not None
-        ]
+        valid_records: List[FlightRecord] = [r for r in records if r.flight_id is not None]
         # Remove any existing rows with the same legacy composite key but a different
         # flight_id to prevent conflicts on the legacy unique index.
         if valid_records:
