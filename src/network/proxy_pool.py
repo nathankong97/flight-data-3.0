@@ -341,9 +341,7 @@ class ProxyPool:
 
         stage1_results = cls._run_stage(all_proxies, stage1_worker, max_workers)
         s1_ok = [
-            r
-            for r in stage1_results
-            if r.ok and (latency_threshold_ms is None or r.latency_ms <= latency_threshold_ms)
+            r for r in stage1_results if r.ok and (latency_threshold_ms is None or r.latency_ms <= latency_threshold_ms)
         ]
 
         def stage2_worker(p: ProxyEndpoint) -> ProxyProbe:

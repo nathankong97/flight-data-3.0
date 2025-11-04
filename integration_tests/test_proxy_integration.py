@@ -36,9 +36,7 @@ def _stage2_probe_fr24(proxies: Dict[str, str]) -> Tuple[bool, Optional[int], Op
 def test_proxy_build_smoke_stage1_stage2() -> None:
     # Only pull the first 30 proxies to keep the test lightweight
     pool, survivors, counts = ProxyPool.build(
-        source_url=(
-            "https://raw.githubusercontent.com/monosans/proxy-list/refs/heads/main/proxies/http.txt"
-        ),
+        source_url=("https://raw.githubusercontent.com/monosans/proxy-list/refs/heads/main/proxies/http.txt"),
         stage1_url="https://httpbin.org/ip",
         stage2_probe=_stage2_probe_fr24,
         fetch_limit=30,
@@ -58,10 +56,7 @@ def test_proxy_build_smoke_stage1_stage2() -> None:
     assert pool is not None
 
     # Emit a brief summary so you can see results when running with -s
-    print(
-        f"proxy_counts fetched={counts['fetched']} "
-        f"stage1_pass={counts['stage1']} stage2_pass={counts['stage2']}"
-    )
+    print(f"proxy_counts fetched={counts['fetched']} " f"stage1_pass={counts['stage1']} stage2_pass={counts['stage2']}")
     if survivors:
         preview = ", ".join(f"{p.host}:{p.port}" for p in survivors[:5])
         print(f"proxy_survivors_sample: {preview}")

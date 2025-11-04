@@ -40,9 +40,7 @@ def _load_env_file(path: Path) -> Dict[str, str]:
     return data
 
 
-def _build_database_url_from_components(
-    values: Mapping[str, str], dotenv_values: Mapping[str, str]
-) -> Optional[str]:
+def _build_database_url_from_components(values: Mapping[str, str], dotenv_values: Mapping[str, str]) -> Optional[str]:
     """Construct a PostgreSQL DSN from discrete HOST/USER/PASSWORD/DB keys."""
 
     host = (
@@ -64,10 +62,7 @@ def _build_database_url_from_components(
         or values.get("PASSWORD")
     )
     database = (
-        values.get("DATABASE_NAME")
-        or dotenv_values.get("DATABASE_NAME")
-        or dotenv_values.get("DB")
-        or values.get("DB")
+        values.get("DATABASE_NAME") or dotenv_values.get("DATABASE_NAME") or dotenv_values.get("DB") or values.get("DB")
     )
     port = (
         values.get("DATABASE_PORT")

@@ -1,0 +1,7 @@
+[run]
+omit =
+    src/jobs/runner.py
+    src/persistence/flights.py
+    src/reference/coordinates.py
+    scripts/*
+

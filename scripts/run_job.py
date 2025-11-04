@@ -156,9 +156,7 @@ def main() -> int:
                 return (False, None, str(exc))
 
         pool, survivors, counts = ProxyPool.build(
-            source_url=(
-                "https://raw.githubusercontent.com/monosans/proxy-list/refs/heads/main/proxies/http.txt"
-            ),
+            source_url=("https://raw.githubusercontent.com/monosans/proxy-list/refs/heads/main/proxies/http.txt"),
             stage1_url=args.proxy_stage1_url,
             stage2_probe=stage2_probe,
             fetch_limit=args.proxy_fetch_limit,

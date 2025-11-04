@@ -183,9 +183,7 @@ def _fetch_with_retries(
     return None
 
 
-def _build_tasks(
-    region: str, airports: List[str], max_pages: Optional[int]
-) -> List[Tuple[str, int]]:
+def _build_tasks(region: str, airports: List[str], max_pages: Optional[int]) -> List[Tuple[str, int]]:
     tasks: List[Tuple[str, int]] = []
     for index, airport in enumerate(airports):
         oldest_page = page_for_index(region, index)
