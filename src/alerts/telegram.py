@@ -17,12 +17,14 @@ Notes:
 """
 
 import logging
-import os
 import traceback
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional
 
 import requests
+
+from src.config import load_environment
 
 MAX_MESSAGE_LEN = 4096
 
@@ -67,6 +69,18 @@ class TelegramSettings:
     parse_mode: Optional[str] = None  # "HTML" or "MarkdownV2"
 
 
+def load_telegram_settings(env_file: Optional[Path] = None) -> Optional[TelegramSettings]:
+    """Load Telegram credentials from the merged environment and dotenv file."""
+    env_values = load_environment(env_file)
+    token = env_values.get("TELEGRAM_BOT_TOKEN")
+    chat_id = env_values.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        return None
+
+    parse_mode = env_values.get("TELEGRAM_PARSE_MODE") or None
+    return TelegramSettings(token=token, chat_id=chat_id, parse_mode=parse_mode)
+
+
 class TelegramAlerter:
     """Minimal Telegram Bot API client for sending alerts.
 
@@ -82,17 +96,19 @@ class TelegramAlerter:
         self._timeout = timeout
 
     @staticmethod
-    def from_env() -> "TelegramAlerter":
+    def from_env(env_file: Optional[Path] = None) -> "TelegramAlerter":
         """Create an alerter from environment variables.
 
         Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
         Optionally uses TELEGRAM_PARSE_MODE.
+
+        Args:
+            env_file: Optional override for the dotenv file location.
         """
-        token = os.environ.get("TELEGRAM_BOT_TOKEN")
-        chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-        if not token or not chat_id:
+        settings = load_telegram_settings(env_file)
+        if settings is None:
             raise ValueError("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID must be set in environment.")
-        return TelegramAlerter(token, chat_id, parse_mode=os.environ.get("TELEGRAM_PARSE_MODE"))
+        return TelegramAlerter(settings.token, settings.chat_id, parse_mode=settings.parse_mode)
 
     def send_text(self, text: str) -> bool:
         """Send text, chunking as needed. Returns True if all chunks succeed."""
@@ -192,18 +208,17 @@ def install_telegram_log_handler_from_env(*, level: int = logging.ERROR, include
 
     _install_attempted = True
     logger = logging.getLogger(__name__)
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
+    settings = load_telegram_settings()
+    if settings is None:
         logger.warning("Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID")
         _handler_installed = False
         return False
 
     try:
-        sender = TelegramAlerter(token=token, chat_id=chat_id, parse_mode=os.environ.get("TELEGRAM_PARSE_MODE"))
+        sender = TelegramAlerter(token=settings.token, chat_id=settings.chat_id, parse_mode=settings.parse_mode)
         handler = TelegramLogHandler(sender, level=level, include_traceback=include_traceback)
         logging.getLogger().addHandler(handler)
-        logger.info("Telegram alert handler enabled for chat_id=%s", chat_id)
+        logger.info("Telegram alert handler enabled for chat_id=%s", settings.chat_id)
         _handler_installed = True
         return True
     except Exception as exc:  # pragma: no cover - defensive
