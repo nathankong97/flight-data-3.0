@@ -124,11 +124,11 @@ class TelegramLogHandler(logging.Handler):
     """
 
     def __init__(
-        self,
-        sender: "_Sender",
-        *,
-        level: int = logging.ERROR,
-        include_traceback: bool = True,
+            self,
+            sender: "_Sender",
+            *,
+            level: int = logging.ERROR,
+            include_traceback: bool = True,
     ) -> None:
         super().__init__(level=level)
         self._sender = sender
@@ -181,7 +181,7 @@ _handler_installed = False
 
 
 def install_telegram_log_handler_from_env(
-    *, level: int = logging.ERROR, include_traceback: bool = True
+        *, level: int = logging.ERROR, include_traceback: bool = True
 ) -> bool:
     """Install a TelegramLogHandler if env vars are present; warn otherwise.
 
