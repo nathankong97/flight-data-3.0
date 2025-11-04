@@ -16,4 +16,3 @@ def test_send_message_to_telegram_if_configured():
     alerter = TelegramAlerter(token=token, chat_id=chat_id)
     ok = alerter.send_text(f"flight-data integration test ping {int(time.time())}")
     assert ok is True
-
