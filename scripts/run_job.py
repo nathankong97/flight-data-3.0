@@ -209,5 +209,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":  # pragma: no cover - script entrypoint
+if __name__ == "__main__":  # pragma: no cover - script entrypoint here
     raise SystemExit(main())
