@@ -180,9 +180,7 @@ _install_attempted = False
 _handler_installed = False
 
 
-def install_telegram_log_handler_from_env(
-    *, level: int = logging.ERROR, include_traceback: bool = True
-) -> bool:
+def install_telegram_log_handler_from_env(*, level: int = logging.ERROR, include_traceback: bool = True) -> bool:
     """Install a TelegramLogHandler if env vars are present; warn otherwise.
 
     Returns True if a handler is installed, False otherwise. Safe to call
@@ -197,9 +195,7 @@ def install_telegram_log_handler_from_env(
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
-        logger.warning(
-            "Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID"
-        )
+        logger.warning("Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID")
         _handler_installed = False
         return False
 
