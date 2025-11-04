@@ -1,5 +1,8 @@
 # Flight Data 3.0 ✈️
 
+[![Tests & Coverage](https://github.com/nathankong97/flight-data-3.0/actions/workflows/tests.yml/badge.svg)](https://github.com/nathankong97/flight-data-3.0/actions/workflows/tests.yml)
+[![Black](https://github.com/nathankong97/flight-data-3.0/actions/workflows/black.yml/badge.svg)](https://github.com/nathankong97/flight-data-3.0/actions/workflows/black.yml)
+
 Ingest scheduled departures from FlightRadar24, transform them into structured records, and persist them to PostgreSQL. Includes a job runner, typed transforms, and a thin psycopg v3 client.
 
 See `AGENTS.md` for conventions and contributor guidelines.
@@ -139,4 +142,3 @@ Integration tests require a reachable PostgreSQL and (for API tests) outbound ne
 ---
 
 Happy flying! 🛫
-
