@@ -1,10 +1,14 @@
 import logging
-import os
 from typing import List
 
 import pytest
 
-from src.alerts.telegram import TelegramAlerter, TelegramLogHandler, chunk_text
+from src.alerts.telegram import (
+    TelegramAlerter,
+    TelegramLogHandler,
+    chunk_text,
+    load_telegram_settings,
+)
 
 
 class DummySender:
@@ -71,3 +75,56 @@ def test_telegram_alerter_chunks_and_calls_requests(monkeypatch):
     assert ok is True
     # Expect 2 calls due to chunking
     assert len(calls) == 2
+
+
+def test_load_telegram_settings_reads_dotenv(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "TELEGRAM_BOT_TOKEN=dot_token",
+                "TELEGRAM_CHAT_ID=dot_chat",
+                "TELEGRAM_PARSE_MODE=MarkdownV2",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+    monkeypatch.delenv("TELEGRAM_PARSE_MODE", raising=False)
+
+    settings = load_telegram_settings(env_file=env_file)
+    assert settings is not None
+    assert settings.token == "dot_token"
+    assert settings.chat_id == "dot_chat"
+    assert settings.parse_mode == "MarkdownV2"
+
+
+def test_load_telegram_settings_prefers_environment_over_dotenv(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "TELEGRAM_BOT_TOKEN=file_token",
+                "TELEGRAM_CHAT_ID=file_chat",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "env_token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "env_chat")
+
+    settings = load_telegram_settings(env_file=env_file)
+    assert settings is not None
+    assert settings.token == "env_token"
+    assert settings.chat_id == "env_chat"
+
+
+def test_telegram_alerter_from_env_requires_settings(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text("TELEGRAM_BOT_TOKEN=only_token", encoding="utf-8")
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+
+    with pytest.raises(ValueError):
+        TelegramAlerter.from_env(env_file=env_file)

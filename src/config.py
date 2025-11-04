@@ -128,4 +128,18 @@ def load_config(env_file: Optional[Path] = None) -> AppConfig:
     )
 
 
-__all__ = ["AppConfig", "load_config", "REPO_ROOT"]
+def load_environment(env_file: Optional[Path] = None) -> Dict[str, str]:
+    """Load environment variables merged with optional dotenv file.
+
+    Args:
+        env_file: Specific dotenv file to read, defaulting to repo-level `.env`.
+
+    Returns:
+        Dictionary of environment variables with `os.environ` values taking precedence.
+    """
+    target_file = env_file or DEFAULT_ENV_FILE
+    dotenv_values = _load_env_file(target_file)
+    return _merge_envs(dotenv_values, os.environ)
+
+
+__all__ = ["AppConfig", "load_config", "load_environment", "REPO_ROOT"]
