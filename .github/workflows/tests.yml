@@ -3,8 +3,12 @@ name: Tests & Coverage
 on:
   push:
     branches: [ main, master ]
+    paths:
+      - '**/*.py'
   pull_request:
     branches: [ "**" ]
+    paths:
+      - '**/*.py'
 
 jobs:
   tests:
@@ -39,4 +43,3 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=85 \
             --cov-config=.coveragerc
-
