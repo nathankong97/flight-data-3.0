@@ -10,19 +10,17 @@ Environment variables (see .env.example):
 - TELEGRAM_PARSE_MODE: Optional ("HTML" or "MarkdownV2")
 
 Notes:
-- Telegram enforces a 4096 character limit per message. This module chunks
+- Telegram enforces a 4096-character limit per message. This module chunks
   long messages and sends them as multiple messages in order.
 - For logging, traceback is included when available (record.exc_info) and
   for CRITICAL messages by default.
 """
 
-from __future__ import annotations
-
 import logging
 import os
 import traceback
 from dataclasses import dataclass
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 import requests
 
@@ -177,3 +175,42 @@ class _Sender:
     def send_text(self, text: str) -> bool:  # pragma: no cover - interface only
         raise NotImplementedError
 
+
+_install_attempted = False
+_handler_installed = False
+
+
+def install_telegram_log_handler_from_env(
+    *, level: int = logging.ERROR, include_traceback: bool = True
+) -> bool:
+    """Install a TelegramLogHandler if env vars are present; warn otherwise.
+
+    Returns True if a handler is installed, False otherwise. Safe to call
+    multiple times; subsequent calls are no-ops.
+    """
+    global _install_attempted, _handler_installed
+    if _install_attempted:
+        return _handler_installed
+
+    _install_attempted = True
+    logger = logging.getLogger(__name__)
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        logger.warning(
+            "Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID"
+        )
+        _handler_installed = False
+        return False
+
+    try:
+        sender = TelegramAlerter(token=token, chat_id=chat_id, parse_mode=os.environ.get("TELEGRAM_PARSE_MODE"))
+        handler = TelegramLogHandler(sender, level=level, include_traceback=include_traceback)
+        logging.getLogger().addHandler(handler)
+        logger.info("Telegram alert handler enabled for chat_id=%s", chat_id)
+        _handler_installed = True
+        return True
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error("Failed to enable Telegram alerts: %s", exc)
+        _handler_installed = False
+        return False

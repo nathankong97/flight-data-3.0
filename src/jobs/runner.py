@@ -15,6 +15,7 @@ from src.pagination import page_for_index
 from src.persistence import upsert_flights
 from src.reference import load_coordinates
 from src.logging_utils import perf, perf_span
+from src.alerts import install_telegram_log_handler_from_env
 from src.transform import extract_departure_records
 
 LOGGER = logging.getLogger(__name__)
@@ -46,6 +47,8 @@ def run_job(
     api_client: FlightRadarClient,
     job_config: RunConfig,
 ) -> str:
+    # Enable Telegram alerts when configured; logs a warning if not configured.
+    install_telegram_log_handler_from_env()
     ingest_run_id = str(uuid.uuid4())
     job_name = getattr(config, "app_name", "flight-data")
     airports = load_airport_codes(job_config.region)
