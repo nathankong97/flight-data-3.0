@@ -39,7 +39,5 @@ jobs:
           fi
 
       - name: Run telegram integration test
-        env:
-          PYTEST_ADDOPTS: ""
         run: |
-          pytest -q -m integration integration_tests/test_telegram_integration.py
+          pytest --override-ini "addopts=" -q -m integration integration_tests/test_telegram_integration.py
