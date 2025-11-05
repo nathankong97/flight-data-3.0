@@ -13,6 +13,7 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_PARSE_MODE: ${{ secrets.TELEGRAM_PARSE_MODE }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +38,17 @@ jobs:
             echo "Telegram secrets TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID are required." >&2
             exit 1
           fi
+
+      - name: Write .env for telegram test
+        run: |
+          {
+            echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}"
+            echo "TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}"
+            if [ -n "${TELEGRAM_PARSE_MODE}" ]; then
+              echo "TELEGRAM_PARSE_MODE=${TELEGRAM_PARSE_MODE}"
+            fi
+          } > .env
+          chmod 600 .env
 
       - name: Run telegram integration test
         run: |
