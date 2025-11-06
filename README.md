@@ -1,5 +1,7 @@
 # Flight Data 3.0 ✈️
 
+Project name: `project-skyline`
+
 [![Tests & Coverage](https://github.com/nathankong97/flight-data-3.0/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nathankong97/flight-data-3.0/actions/workflows/tests.yml?query=branch%3Amain)
 [![Black](https://github.com/nathankong97/flight-data-3.0/actions/workflows/black.yml/badge.svg?branch=main)](https://github.com/nathankong97/flight-data-3.0/actions/workflows/black.yml?query=branch%3Amain)
 
