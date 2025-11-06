@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+Project name: `project-skyline`
+
 ## Project Structure & Module Organization
 - Place all runtime code under `src/`, organizing modules and subpackages as needed (e.g., `src/ingest/loader.py`, `src/utils.py`) so related logic stays co-located.
 - Keep tests in `tests/`, mirroring source filenames (`tests/test_flight_data.py`) to highlight missing coverage quickly.
