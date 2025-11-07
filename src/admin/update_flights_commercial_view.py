@@ -62,7 +62,9 @@ def build_view_sql(blocklist_codes: List[str]) -> str:
 
     in_list = ",".join(quote_literal(c) for c in normalized) if normalized else None
 
-    blocklist_clause = f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
+    blocklist_clause = (
+        f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
+    )
 
     sql = f"""
 CREATE OR REPLACE VIEW public.flights_commercial AS
@@ -140,7 +142,9 @@ def main() -> None:
             cur.execute(sql)
         conn.commit()
 
-    print(f"Updated view public.flights_commercial with {len(codes)} airline ICAO code(s) from {file_path}.")
+    print(
+        f"Updated view public.flights_commercial with {len(codes)} airline ICAO code(s) from {file_path}."
+    )
 
 
 if __name__ == "__main__":

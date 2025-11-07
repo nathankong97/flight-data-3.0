@@ -105,6 +105,7 @@ def test_fetch_departures_429_logs_and_raises(mock_session, caplog):
     with pytest.raises(requests.HTTPError):
         client.fetch_departures("HND")
 
+
 def test_fetch_departures_reports_proxy_failure_on_exception(mock_session):
     def raising_get(*args, **kwargs):
         raise requests.RequestException("proxy failed")

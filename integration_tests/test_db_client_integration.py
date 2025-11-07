@@ -26,7 +26,9 @@ def test_db_client_round_trip(db_client):
             rows,
         )
 
-        result = db_client.fetch_all(f"SELECT flight_num, status_detail FROM {table_name} ORDER BY flight_num")
+        result = db_client.fetch_all(
+            f"SELECT flight_num, status_detail FROM {table_name} ORDER BY flight_num"
+        )
         assert result == [
             {"flight_num": "NH101", "status_detail": "scheduled"},
             {"flight_num": "UA202", "status_detail": "boarding"},

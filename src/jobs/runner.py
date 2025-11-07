@@ -227,7 +227,11 @@ def _fetch_with_retries(
                     except Exception:
                         sleep_s = max(delay_seconds * 2, 30.0)
                     # If direct fallback is allowed on 429, break to direct phase on last proxy try
-                    if job_config.direct_fallback and job_config.direct_fallback_on_429 and attempt == proxy_attempts:
+                    if (
+                        job_config.direct_fallback
+                        and job_config.direct_fallback_on_429
+                        and attempt == proxy_attempts
+                    ):
                         LOGGER.info(
                             "Falling back to direct for %s page %s after %s proxy attempts (last=429)",
                             airport,
@@ -275,7 +279,11 @@ def _fetch_with_retries(
                 return None
             # Respect Retry-After if present for 429
             sleep_s = delay_seconds
-            if isinstance(exc, requests.HTTPError) and exc.response is not None and getattr(exc.response, "status_code", None) == 429:
+            if (
+                isinstance(exc, requests.HTTPError)
+                and exc.response is not None
+                and getattr(exc.response, "status_code", None) == 429
+            ):
                 ra = exc.response.headers.get("Retry-After")
                 try:
                     sleep_s = float(ra) if ra is not None else max(delay_seconds * 2, 30.0)
@@ -285,7 +293,9 @@ def _fetch_with_retries(
     return None
 
 
-def _build_tasks(region: str, airports: List[str], max_pages: Optional[int]) -> List[Tuple[str, int]]:
+def _build_tasks(
+    region: str, airports: List[str], max_pages: Optional[int]
+) -> List[Tuple[str, int]]:
     tasks: List[Tuple[str, int]] = []
     for index, airport in enumerate(airports):
         oldest_page = page_for_index(region, index)

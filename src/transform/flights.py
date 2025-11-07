@@ -203,7 +203,10 @@ def extract_departure_records(
     records: List[FlightRecord] = []
     for item in departures:
         # Prefer published flight number; if absent (e.g., cancelled/private), use a placeholder
-        flight_num = _to_optional_str(_nested_get(item, ["flight", "identification", "number", "default"])) or "-"
+        flight_num = (
+            _to_optional_str(_nested_get(item, ["flight", "identification", "number", "default"]))
+            or "-"
+        )
 
         record = FlightRecord(
             flight_id=_to_optional_int(_nested_get(item, ["flight", "identification", "row"])),
@@ -212,8 +215,12 @@ def extract_departure_records(
             aircraft_code=_nested_get(item, ["flight", "aircraft", "model", "code"]),
             aircraft_text=_nested_get(item, ["flight", "aircraft", "model", "text"]),
             aircraft_reg=_nested_get(item, ["flight", "aircraft", "registration"]),
-            aircraft_co2=_to_optional_float(_nested_get(item, ["flight", "aircraft", "co2", "value"])),
-            aircraft_restricted=_to_optional_bool(_nested_get(item, ["flight", "aircraft", "restricted"])),
+            aircraft_co2=_to_optional_float(
+                _nested_get(item, ["flight", "aircraft", "co2", "value"])
+            ),
+            aircraft_restricted=_to_optional_bool(
+                _nested_get(item, ["flight", "aircraft", "restricted"])
+            ),
             owner_name=_nested_get(item, ["flight", "owner", "name"]),
             owner_iata=_nested_get(item, ["flight", "owner", "code", "iata"]),
             owner_icao=_nested_get(item, ["flight", "owner", "code", "icao"]),
@@ -224,7 +231,9 @@ def extract_departure_records(
             origin_offset=_normalize_tz_offset(
                 _nested_get(item, ["flight", "airport", "origin", "timezone", "offset"])
             ),
-            origin_offset_abbr=_nested_get(item, ["flight", "airport", "origin", "timezone", "abbr"]),
+            origin_offset_abbr=_nested_get(
+                item, ["flight", "airport", "origin", "timezone", "abbr"]
+            ),
             origin_offset_dst=_to_optional_bool(
                 _nested_get(item, ["flight", "airport", "origin", "timezone", "isDst"])
             ),
@@ -235,14 +244,22 @@ def extract_departure_records(
             dest_offset=_normalize_tz_offset(
                 _nested_get(item, ["flight", "airport", "destination", "timezone", "offset"])
             ),
-            dest_offset_abbr=_nested_get(item, ["flight", "airport", "destination", "timezone", "abbr"]),
+            dest_offset_abbr=_nested_get(
+                item, ["flight", "airport", "destination", "timezone", "abbr"]
+            ),
             dest_offset_dst=_to_optional_bool(
                 _nested_get(item, ["flight", "airport", "destination", "timezone", "isDst"])
             ),
-            dest_terminal=_nested_get(item, ["flight", "airport", "destination", "info", "terminal"]),
+            dest_terminal=_nested_get(
+                item, ["flight", "airport", "destination", "info", "terminal"]
+            ),
             dest_gate=_nested_get(item, ["flight", "airport", "destination", "info", "gate"]),
-            sched_dep=_to_optional_int(_nested_get(item, ["flight", "time", "scheduled", "departure"])),
-            sched_arr=_to_optional_int(_nested_get(item, ["flight", "time", "scheduled", "arrival"])),
+            sched_dep=_to_optional_int(
+                _nested_get(item, ["flight", "time", "scheduled", "departure"])
+            ),
+            sched_arr=_to_optional_int(
+                _nested_get(item, ["flight", "time", "scheduled", "arrival"])
+            ),
             real_dep=_to_optional_int(_nested_get(item, ["flight", "time", "real", "departure"])),
             real_arr=_to_optional_int(_nested_get(item, ["flight", "time", "real", "arrival"])),
             origin_lat=origin_lat,
