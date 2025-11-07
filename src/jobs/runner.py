@@ -275,7 +275,11 @@ def _fetch_with_retries(
                 return None
             # Respect Retry-After if present for 429
             sleep_s = delay_seconds
-            if isinstance(exc, requests.HTTPError) and exc.response is not None and getattr(exc.response, "status_code", None) == 429:
+            if (
+                isinstance(exc, requests.HTTPError)
+                and exc.response is not None
+                and getattr(exc.response, "status_code", None) == 429
+            ):
                 ra = exc.response.headers.get("Retry-After")
                 try:
                     sleep_s = float(ra) if ra is not None else max(delay_seconds * 2, 30.0)
