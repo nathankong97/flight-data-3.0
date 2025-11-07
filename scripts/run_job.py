@@ -5,7 +5,7 @@ import argparse
 import logging
 
 from src.api import FlightRadarClient
-from src.config import load_config, AppConfig, REPO_ROOT
+from src.config import load_config, AppConfig, REPO_ROOT, load_environment
 from src.db import DatabaseClient
 from src.jobs import RunConfig, run_job
 from src.logging_utils import configure_logging, perf_span
@@ -185,6 +185,35 @@ def main() -> int:
         report_proxy_failure=proxy_failure_cb,
     )
 
+    # Feature flags and tuning via environment
+    env = load_environment()
+
+    from typing import Optional
+
+    def _parse_bool(val: Optional[str], default: bool = False) -> bool:
+        if val is None:
+            return default
+        v = val.strip().lower()
+        return v in ("1", "true", "yes", "on")
+
+    def _parse_float(val: Optional[str], default: float) -> float:
+        try:
+            return float(val) if val is not None else default
+        except Exception:
+            return default
+
+    def _parse_int(val: Optional[str], default: int) -> int:
+        try:
+            return int(val) if val is not None else default
+        except Exception:
+            return default
+
+    direct_fallback = _parse_bool(env.get("FD_DIRECT_FALLBACK"), False)
+    direct_fallback_on_429 = _parse_bool(env.get("FD_DIRECT_FALLBACK_ON_429"), False)
+    proxy_attempts = env.get("FD_RETRY_ATTEMPTS_PROXY")
+    direct_attempts = _parse_int(env.get("FD_RETRY_ATTEMPTS_DIRECT"), 1)
+    degraded_fail_threshold = _parse_int(env.get("FD_DEGRADED_FAIL_THRESHOLD"), 1)
+
     run_config = RunConfig(
         region=args.region,
         max_pages=args.max_pages,
@@ -194,6 +223,11 @@ def main() -> int:
         page_delay_seconds=args.page_delay,
         airport_delay_seconds=args.airport_delay,
         concurrent_workers=concurrent_workers,
+        direct_fallback=direct_fallback,
+        direct_fallback_on_429=direct_fallback_on_429,
+        proxy_attempts=_parse_int(proxy_attempts, None) if proxy_attempts is not None else None,
+        direct_attempts=direct_attempts,
+        degraded_fail_threshold=degraded_fail_threshold,
     )
 
     try:

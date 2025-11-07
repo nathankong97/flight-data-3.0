@@ -71,6 +71,40 @@ def test_fetch_departures_uses_proxies_when_provided(mock_session):
     assert kwargs["proxies"] == proxies_mapping
 
 
+def test_fetch_departures_can_force_direct(mock_session):
+    response = MagicMock()
+    response.json.return_value = {"data": []}
+    response.raise_for_status.return_value = None
+    mock_session.get.return_value = response
+
+    proxies_mapping = {"http": "http://1.1.1.1:80", "https": "http://1.1.1.1:80"}
+    client = FlightRadarClient(
+        session=mock_session,
+        get_proxies=lambda: proxies_mapping,
+    )
+
+    client.fetch_departures("HND", force_proxies=False)
+
+    _, kwargs = mock_session.get.call_args
+    assert kwargs["proxies"] is None
+
+
+def test_fetch_departures_429_logs_and_raises(mock_session, caplog):
+    # Prepare a response that simulates 429 with Retry-After
+    resp = MagicMock()
+    resp.status_code = 429
+    resp.headers = {"Retry-After": "15"}
+
+    http_err = requests.HTTPError("too many requests")
+    http_err.response = resp
+    resp.raise_for_status.side_effect = http_err
+    mock_session.get.return_value = resp
+
+    client = FlightRadarClient(session=mock_session)
+
+    with pytest.raises(requests.HTTPError):
+        client.fetch_departures("HND")
+
 def test_fetch_departures_reports_proxy_failure_on_exception(mock_session):
     def raising_get(*args, **kwargs):
         raise requests.RequestException("proxy failed")

@@ -1,8 +1,13 @@
-"""Client for the FlightRadar24 airport schedule endpoint."""
+"""Client for the FlightRadar24 airport schedule endpoint.
+
+Adds optional request-route logging (proxy vs direct) and supports forcing
+direct calls for guarded fallback scenarios.
+"""
 
 from typing import Any, Callable, Dict, Optional
 
 import requests
+import logging
 from src.logging_utils import perf
 
 BASE_URL = "https://api.flightradar24.com/common/v1/airport.json"
@@ -66,6 +71,7 @@ class FlightRadarClient:
         page: int = 1,
         limit: int = 100,
         timestamp: Optional[int] = None,
+        force_proxies: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Fetch the scheduled departures for a specific airport/page."""
 
@@ -78,12 +84,38 @@ class FlightRadarClient:
 
         params = self._build_params(airport_code, page, limit, timestamp)
         proxies: Optional[Dict[str, str]] = None
-        if self._get_proxies is not None:
+        # Determine routing: proxy vs direct
+        if force_proxies is False:
+            proxies = None
+        elif self._get_proxies is not None:
             try:
                 proxies = self._get_proxies()
             except Exception:  # pragma: no cover - defensive
                 proxies = None
 
+        # Log the route used at DEBUG level for diagnostics
+        route = "proxy" if proxies else "direct"
+        if logging.getLogger(__name__).isEnabledFor(logging.DEBUG):
+            px = proxies.get("http") if proxies else None
+            masked = None
+            if px:
+                try:
+                    # mask host (keep first octet only)
+                    host_port = px.split("//", 1)[-1]
+                    host = host_port.split(":", 1)[0]
+                    parts = host.split(".")
+                    masked = (parts[0] + ".x.x.x") if len(parts) == 4 else host
+                except Exception:  # pragma: no cover - defensive
+                    masked = "unknown"
+            logging.getLogger(__name__).debug(
+                "api.fetch_departures via=%s airport=%s page=%s proxy=%s",
+                route,
+                airport_code,
+                page,
+                masked,
+            )
+
+        # Perform request; only treat transport-level failures as proxy failures
         try:
             response = self._session.get(
                 BASE_URL,
@@ -100,6 +132,17 @@ class FlightRadarClient:
                 except Exception:  # pragma: no cover - defensive
                     pass
             raise
+
+        # Log 429 Retry-After if present (do not mark proxy as failed here)
+        if response.status_code == 429:
+            ra = response.headers.get("Retry-After")
+            logging.getLogger(__name__).debug(
+                "api.fetch_departures got 429 airport=%s page=%s retry_after=%s",
+                airport_code,
+                page,
+                ra,
+            )
+
         response.raise_for_status()
         return response.json()
 
