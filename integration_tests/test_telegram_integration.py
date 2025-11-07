@@ -14,8 +14,6 @@ def test_send_message_to_telegram_if_configured():
             pytest.fail("Telegram credentials must be configured for CI runs.")
         pytest.skip("Telegram creds not configured; skipping integration test")
 
-    alerter = TelegramAlerter(
-        token=settings.token, chat_id=settings.chat_id, parse_mode=settings.parse_mode
-    )
+    alerter = TelegramAlerter(token=settings.token, chat_id=settings.chat_id, parse_mode=settings.parse_mode)
     ok = alerter.send_text(f"flight-data integration test ping {int(time.time())}")
     assert ok is True

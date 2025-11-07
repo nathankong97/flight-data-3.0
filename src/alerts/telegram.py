@@ -89,9 +89,7 @@ class TelegramAlerter:
         alerter.send_text("Flight-data: critical error detected")
     """
 
-    def __init__(
-        self, token: str, chat_id: str, *, parse_mode: Optional[str] = None, timeout: float = 10.0
-    ) -> None:
+    def __init__(self, token: str, chat_id: str, *, parse_mode: Optional[str] = None, timeout: float = 10.0) -> None:
         self._token = token
         self._chat_id = chat_id
         self._parse_mode = parse_mode
@@ -181,9 +179,7 @@ class TelegramLogHandler(logging.Handler):
     @staticmethod
     def _format_traceback(record: logging.LogRecord) -> str:
         if record.exc_info:
-            return "Traceback (most recent call last):\n" + "".join(
-                traceback.format_exception(*record.exc_info)
-            )
+            return "Traceback (most recent call last):\n" + "".join(traceback.format_exception(*record.exc_info))
         if record.stack_info:
             return f"Stack:\n{record.stack_info}"
         return ""
@@ -200,9 +196,7 @@ _install_attempted = False
 _handler_installed = False
 
 
-def install_telegram_log_handler_from_env(
-    *, level: int = logging.ERROR, include_traceback: bool = True
-) -> bool:
+def install_telegram_log_handler_from_env(*, level: int = logging.ERROR, include_traceback: bool = True) -> bool:
     """Install a TelegramLogHandler if env vars are present; warn otherwise.
 
     Returns True if a handler is installed, False otherwise. Safe to call
@@ -216,16 +210,12 @@ def install_telegram_log_handler_from_env(
     logger = logging.getLogger(__name__)
     settings = load_telegram_settings()
     if settings is None:
-        logger.warning(
-            "Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID"
-        )
+        logger.warning("Telegram alerts disabled: missing TELEGRAM_BOT_TOKEN and/or TELEGRAM_CHAT_ID")
         _handler_installed = False
         return False
 
     try:
-        sender = TelegramAlerter(
-            token=settings.token, chat_id=settings.chat_id, parse_mode=settings.parse_mode
-        )
+        sender = TelegramAlerter(token=settings.token, chat_id=settings.chat_id, parse_mode=settings.parse_mode)
         handler = TelegramLogHandler(sender, level=level, include_traceback=include_traceback)
         logging.getLogger().addHandler(handler)
         logger.info("Telegram alert handler enabled for chat_id=%s", settings.chat_id)

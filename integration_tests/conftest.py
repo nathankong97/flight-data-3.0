@@ -38,9 +38,7 @@ def ensure_schema(app_config: AppConfig, integration_schema: str) -> Generator[N
 
 
 @pytest.fixture(scope="session")
-def db_client(
-    app_config: AppConfig, integration_schema: str
-) -> Generator[DatabaseClient, None, None]:
+def db_client(app_config: AppConfig, integration_schema: str) -> Generator[DatabaseClient, None, None]:
     client = DatabaseClient(
         app_config.database_url,
         min_size=1,

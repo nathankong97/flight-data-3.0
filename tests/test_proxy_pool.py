@@ -18,9 +18,7 @@ class DummyResponse:
 
 
 def test_parse_proxy_line_valid_and_invalid() -> None:
-    assert proxy_mod._parse_proxy_line("1.2.3.4:8080") == proxy_mod.ProxyEndpoint(
-        host="1.2.3.4", port=8080
-    )
+    assert proxy_mod._parse_proxy_line("1.2.3.4:8080") == proxy_mod.ProxyEndpoint(host="1.2.3.4", port=8080)
     assert proxy_mod._parse_proxy_line("bad") is None
     assert proxy_mod._parse_proxy_line("1.2.3.4:abc") is None
 
