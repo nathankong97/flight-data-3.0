@@ -106,13 +106,9 @@ def build_view_sql(
             continue
         seen_names.add(u)
         name_norm.append(u)
-    names_in_list = (
-        ",".join(quote_literal(n) for n in name_norm) if name_norm else None
-    )
+    names_in_list = ",".join(quote_literal(n) for n in name_norm) if name_norm else None
     blocklist_clause_names = (
-        f" OR UPPER(COALESCE(f.airline, '')) IN ({names_in_list})\n"
-        if names_in_list
-        else ""
+        f" OR UPPER(COALESCE(f.airline, '')) IN ({names_in_list})\n" if names_in_list else ""
     )
 
     sql = f"""
