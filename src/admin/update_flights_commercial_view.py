@@ -1,7 +1,7 @@
 import argparse
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import psycopg
 
@@ -29,6 +29,33 @@ def load_airline_codes(file_path: Path) -> List[str]:
     return codes
 
 
+def load_airline_names(file_path: Path) -> List[str]:
+    """Load airline names from data/filtered_airlines_name.txt.
+
+    This file maps to the `flights.airline` text column. We normalize names to
+    upper-case to match against `UPPER(COALESCE(f.airline, ''))` in SQL.
+
+    Args:
+        file_path: Path to data/filtered_airlines_name.txt.
+
+    Returns:
+        A list of uppercased, deduplicated airline names (non-empty lines only).
+    """
+    seen = set()
+    names: List[str] = []
+    with file_path.open("r", encoding="utf-8") as f:
+        for raw in f:
+            name = raw.strip()
+            if not name:
+                continue
+            u = name.upper()
+            if u in seen:
+                continue
+            seen.add(u)
+            names.append(u)
+    return names
+
+
 def quote_literal(value: str) -> str:
     """Return a SQL single-quoted literal.
 
@@ -41,7 +68,10 @@ def quote_literal(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
-def build_view_sql(blocklist_codes: List[str]) -> str:
+def build_view_sql(
+    blocklist_codes: List[str],
+    blocklist_names: Optional[List[str]] = None,
+) -> str:
     """Construct the CREATE OR REPLACE VIEW SQL including the airline blocklist.
 
     Args:
@@ -62,7 +92,24 @@ def build_view_sql(blocklist_codes: List[str]) -> str:
 
     in_list = ",".join(quote_literal(c) for c in normalized) if normalized else None
 
-    blocklist_clause = f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
+    blocklist_clause = (
+        f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
+    )
+
+    # Airline name blocklist (maps to flights.airline, not codes)
+    blocklist_names = blocklist_names or []
+    name_norm: List[str] = []
+    seen_names = set()
+    for n in blocklist_names:
+        u = str(n).strip().upper()
+        if not u or u in seen_names:
+            continue
+        seen_names.add(u)
+        name_norm.append(u)
+    names_in_list = ",".join(quote_literal(n) for n in name_norm) if name_norm else None
+    blocklist_clause_names = (
+        f" OR UPPER(COALESCE(f.airline, '')) IN ({names_in_list})\n" if names_in_list else ""
+    )
 
     sql = f"""
 CREATE OR REPLACE VIEW public.flights_commercial AS
@@ -99,6 +146,8 @@ WHERE NOT (
 
     -- Airline ICAO blocklist from data/filtered_airlines.txt
     {blocklist_clause}
+    -- Airline name blocklist from data/filtered_airlines_name.txt
+    {blocklist_clause_names}
 
     -- Non-commercial/unknown housekeeping from legacy rules
     OR f.dest_iata IS NULL
@@ -115,7 +164,10 @@ COMMENT ON VIEW public.flights_commercial IS 'Filtered commercial passenger flig
 def main() -> None:
     """Entry point: update the view using data/filtered_airlines.txt and DATABASE_URL."""
     parser = argparse.ArgumentParser(
-        description="Update public.flights_commercial view using data/filtered_airlines.txt"
+        description=(
+            "Update public.flights_commercial view using data/filtered_airlines.txt "
+            "and optional data/filtered_airlines_name.txt"
+        )
     )
     parser.add_argument(
         "--database-url",
@@ -128,19 +180,26 @@ def main() -> None:
     if not args.database_url:
         raise SystemExit("DATABASE_URL is required (or pass --database-url)")
 
-    file_path = Path("data/filtered_airlines.txt")
-    if not file_path.exists():
-        raise SystemExit(f"Airlines file not found: {file_path}")
+    codes_path = Path("data/filtered_airlines.txt")
+    if not codes_path.exists():
+        raise SystemExit(f"Airlines file not found: {codes_path}")
 
-    codes = load_airline_codes(file_path)
-    sql = build_view_sql(codes)
+    names_path = Path("data/filtered_airlines_name.txt")
+
+    codes = load_airline_codes(codes_path)
+    names = load_airline_names(names_path) if names_path.exists() else []
+    sql = build_view_sql(codes, names)
 
     with psycopg.connect(args.database_url) as conn:
         with conn.cursor() as cur:
             cur.execute(sql)
         conn.commit()
 
-    print(f"Updated view public.flights_commercial with {len(codes)} airline ICAO code(s) from {file_path}.")
+    print(
+        "Updated view public.flights_commercial with "
+        f"{len(codes)} airline ICAO code(s) from {codes_path} and "
+        f"{len(names)} airline name(s) from {names_path if names_path.exists() else 'N/A'}."
+    )
 
 
 if __name__ == "__main__":
