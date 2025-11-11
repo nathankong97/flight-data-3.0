@@ -92,9 +92,7 @@ def build_view_sql(
 
     in_list = ",".join(quote_literal(c) for c in normalized) if normalized else None
 
-    blocklist_clause = (
-        f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
-    )
+    blocklist_clause = f" OR UPPER(COALESCE(f.airline_icao, '')) IN ({in_list})\n" if in_list else ""
 
     # Airline name blocklist (maps to flights.airline, not codes)
     blocklist_names = blocklist_names or []
@@ -107,9 +105,7 @@ def build_view_sql(
         seen_names.add(u)
         name_norm.append(u)
     names_in_list = ",".join(quote_literal(n) for n in name_norm) if name_norm else None
-    blocklist_clause_names = (
-        f" OR UPPER(COALESCE(f.airline, '')) IN ({names_in_list})\n" if names_in_list else ""
-    )
+    blocklist_clause_names = f" OR UPPER(COALESCE(f.airline, '')) IN ({names_in_list})\n" if names_in_list else ""
 
     sql = f"""
 CREATE OR REPLACE VIEW public.flights_commercial AS
