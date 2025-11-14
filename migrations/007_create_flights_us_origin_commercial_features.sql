@@ -114,7 +114,6 @@ SELECT
   -- Result Scores
   ((CASE WHEN ww.cargo_letter THEN 3 ELSE 0 END)
    + (CASE WHEN ww.is_freighter_type_guess THEN 4 ELSE 0 END)
-   + (CASE WHEN ww.is_night_bank THEN 1 ELSE 0 END)
    + (CASE WHEN ww.involves_cargo_hub THEN 1 ELSE 0 END)
   ) AS suspected_cargo_leak,
   ((CASE WHEN ww.flights_per_week <= 3 THEN 3 ELSE 0 END)
@@ -132,4 +131,3 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_flights_us_origin_commercial_features_fid
 
 COMMENT ON MATERIALIZED VIEW public.flights_us_origin_commercial_features IS
   'Engineered features and scores for detecting cargo/charter leakage within US-origin flights_commercial.';
-
