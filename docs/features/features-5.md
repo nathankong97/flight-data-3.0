@@ -141,7 +141,7 @@
     - is_night_bank: dep hour ≥21 or <=4 (cargo bank window).
     - block_mins: (arr - dep) minutes using actual, fallback to sched.
 - Operator
-    - airline_iata, airline_icao, airline.
+    - airline_iata, airline_icao, airline, status_detail.
     - cargo_letter: check `airline` contains keywords like "cargo" and "freight".
 - Aircraft
     - is_freighter_type_guess: aircraft_code like freighter codes or aircraft_text ends with “F”.
@@ -155,7 +155,8 @@
     - both_terminals_missing, both_gates_missing: both sides null.
 - Behavior/Recurrence
     - flights_per_week: weekly count per (airline_iata, origin_iata, dest_iata).
-    - low_recurrence: weekly count <= 3 (proxy for non-scheduled/charter).
+    - low_recurrence: weekly count <= 2 (proxy for non-scheduled/charter).
+    - low_recurrence_total: appearance in entire table <= 6.
 
 ### Signals and Weights
 
@@ -165,48 +166,25 @@
     - is_night_bank (+1)
     - involves_cargo_hub (+1)
 - Airline charter/positioning
-    - low_recurrence (<=3/week) (+3)
+    - low_recurrence (<=2/week) (+2)
+    - low_recurrence_total (<=6 overall) (+2)
     - origin_equals_dest (+4)
     - involves_mro_storage (+3)
-    - missing_tailnumber (+2)
+    - missing_tailnumber (+1)
     - both_terminals_missing (+1)
     - both_gates_missing (+1)
     - is_night_bank (when cargo score=0) (+1)
+    - miss_aircraft_text (+1)
 
-### Thresholds and Confidence
+### Confidence
 
-- Category thresholds
-    - cargo_threshold = 5
-    - charter_threshold = 5
-- Confidence mapping
-    - High: score ≥ 7 or includes any strong signal (is_freighter_type_guess OR origin_equals_dest OR
-      involves_mro_storage) plus ≥1 other signal
-    - Medium: threshold ≤ score < 7
-    - Low: tied or exactly at threshold with conflict
+- High: score ≥ 7 or includes any strong signal (is_freighter_type_guess OR origin_equals_dest OR
+  involves_mro_storage) plus ≥1 other signal
+- Medium: 5 ≤ score < 7
+- Low: tied or exactly at threshold with conflict
 
 ## Test Plan
 
 - Required unit tests (file names, scenarios)
 - Integration/manual checks
 - Acceptance test data or fixtures
-
-## Deliverables
-
-- Code changes
-- Tests
-- Documentation updates (README, AGENTS.md, etc.)
-
-## Additional Guidance
-
-- Edge cases to handle
-- What to avoid (e.g., “Don’t refactor module X”)
-- Format for final summary (bullets, sections)
-
-## Dependencies
-
-- Internal: other features, refactors, tech debt.
-- External: datasets, MCP agents, approvals, infra tasks.
-- Unit tests: planned modules/files.
-- Integration tests: scenarios or fixtures.
-- QA checklist/manual validation steps.
-- Metrics to monitor post-release.

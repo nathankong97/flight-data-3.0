@@ -6,6 +6,7 @@ WITH base AS (
   SELECT
     f.flight_id,
     f.flight_num,
+    f.status_detail,
     f.airline,
     f.airline_iata,
     f.aircraft_code,
@@ -42,6 +43,7 @@ feats AS (
       OR EXTRACT(HOUR FROM (to_timestamp(dep_epoch) + (interval '1 hour' * origin_offset_hours))) <= 4
     ) AS is_night_bank,
     -- Operator
+    status_detail,
     airline,
     airline_iata,
     (COALESCE(airline,'') ~* '(cargo|freight)') AS cargo_letter,
@@ -59,6 +61,7 @@ feats AS (
     ) AS is_freighter_type_guess,
     (COALESCE(aircraft_text,'') ~* '(Citation|C25[0-9]|C56[0-9]|C68[0-9]|Gulfstream|GLF[0-9]|G280|Global|GLEX|Learjet|H25B|Hawker|Falcon|FA7X|FA8X|Phenom|E55P|EMB[- ]?505|PC-12|King Air|BE20|BE30)') AS is_bizjet_type_guess,
     (aircraft_reg IS NULL OR NULLIF(trim(aircraft_reg),'') IS NULL) AS missing_tailnumber,
+    (aircraft_text IS NULL OR NULLIF(trim(aircraft_text),'') IS NULL) AS miss_aircraft_text,
     -- Route/Airport
     origin_iata,
     dest_iata,
@@ -76,7 +79,10 @@ with_week AS (
     f.*,
     COUNT(*) OVER (
       PARTITION BY airline_iata, origin_iata, dest_iata, date_trunc('week', dep_local_ts)
-    ) AS flights_per_week
+    ) AS flights_per_week,
+    COUNT(*) OVER (
+      PARTITION BY airline_iata, origin_iata, dest_iata
+    ) AS flights_total_route
   FROM feats f
 )
 SELECT
@@ -90,6 +96,7 @@ SELECT
   ww.block_mins,
   ww.is_night_bank,
   -- Operator
+  ww.status_detail,
   ww.airline,
   ww.airline_iata,
   ww.cargo_letter,
@@ -100,6 +107,7 @@ SELECT
   ww.is_freighter_type_guess,
   ww.is_bizjet_type_guess,
   ww.missing_tailnumber,
+  ww.miss_aircraft_text,
   -- Route/Airport
   ww.origin_iata,
   ww.dest_iata,
@@ -110,19 +118,23 @@ SELECT
   ww.both_gates_missing,
   -- Recurrence
   ww.flights_per_week,
-  (ww.flights_per_week <= 3) AS low_recurrence,
+  (ww.flights_per_week <= 2) AS low_recurrence,
+  (ww.flights_total_route <= 6) AS low_recurrence_total,
   -- Result Scores
   ((CASE WHEN ww.cargo_letter THEN 3 ELSE 0 END)
    + (CASE WHEN ww.is_freighter_type_guess THEN 4 ELSE 0 END)
+   + (CASE WHEN ww.is_night_bank THEN 1 ELSE 0 END)
    + (CASE WHEN ww.involves_cargo_hub THEN 1 ELSE 0 END)
   ) AS suspected_cargo_leak,
-  ((CASE WHEN ww.flights_per_week <= 3 THEN 3 ELSE 0 END)
+  ((CASE WHEN ww.flights_per_week <= 2 THEN 2 ELSE 0 END)
+   + (CASE WHEN ww.flights_total_route <= 6 THEN 2 ELSE 0 END)
    + (CASE WHEN ww.origin_equals_dest THEN 4 ELSE 0 END)
    + (CASE WHEN ww.involves_mro_storage THEN 3 ELSE 0 END)
-   + (CASE WHEN ww.missing_tailnumber THEN 2 ELSE 0 END)
+   + (CASE WHEN ww.missing_tailnumber THEN 1 ELSE 0 END)
    + (CASE WHEN ww.both_terminals_missing THEN 1 ELSE 0 END)
    + (CASE WHEN ww.both_gates_missing THEN 1 ELSE 0 END)
    + (CASE WHEN (NOT ww.cargo_letter AND NOT ww.is_freighter_type_guess AND NOT ww.involves_cargo_hub AND ww.is_night_bank) THEN 1 ELSE 0 END)
+   + (CASE WHEN ww.miss_aircraft_text THEN 1 ELSE 0 END)
   ) AS suspected_airline_charter
 FROM with_week ww;
 
